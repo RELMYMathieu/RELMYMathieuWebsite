@@ -1,0 +1,378 @@
+---
+import Section from './Section.astro';
+
+interface Work {
+  id: string;
+  name: string;
+  meta: string;
+  path: string;
+  description: string;
+  links: { label: string; href: string }[];
+  stack: string;
+}
+
+const works: Work[] = [
+  {
+    id: 'relmy-site',
+    name: 'relmymathieu.me',
+    meta: 'web · astro · 2025-present',
+    path: '~/works/relmymathieu.me',
+    description:
+      "Personal portfolio & identity site. Built with Astro — static, fast, no framework overhead. The monospace aesthetic and terminal nav came naturally. It's a living thing.",
+    links: [
+      { label: '→ github.com/relmymathieu', href: 'https://github.com/relmymathieu' },
+      { label: '→ relmymathieu.me', href: 'https://relmymathieu.me' },
+    ],
+    stack: 'astro · tailwind · typescript · motion.dev',
+  },
+];
+---
+
+<Section delay={0}>
+  <h2 class="font-bold mb-3 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Works</h2>
+  <ul class="works-list" role="list">
+    {works.map((w) => (
+      <li>
+        <button
+          class="work-item"
+          type="button"
+          data-work={w.id}
+          aria-haspopup="dialog"
+          aria-controls={`ww-${w.id}`}
+        >
+          <span class="work-item__name">{w.name}</span>
+          <span class="work-item__meta">{w.meta}</span>
+          <span class="work-item__open" aria-hidden="true">[open]</span>
+        </button>
+      </li>
+    ))}
+  </ul>
+</Section>
+
+{works.map((w) => (
+  <div
+    id={`ww-${w.id}`}
+    class="ww"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby={`ww-label-${w.id}`}
+    aria-describedby={`ww-desc-${w.id}`}
+    data-work-id={w.id}
+    hidden
+  >
+    <div class="ww-titlebar" data-drag-handle>
+      <span class="ww-titlebar__prompt" aria-hidden="true">work@relmy</span>
+      <span class="ww-titlebar__sep" aria-hidden="true">:</span>
+      <span class="ww-titlebar__path" id={`ww-label-${w.id}`}>{w.path}</span>
+      <button class="ww-close" type="button" aria-label={`Close ${w.name} window`}>[×]</button>
+    </div>
+    <div class="ww-body" id={`ww-desc-${w.id}`}>
+      <div class="ww-img-placeholder" aria-label="Preview image placeholder">
+        <span class="ww-img-placeholder__text" aria-hidden="true">[ no screenshot yet ]</span>
+      </div>
+      <div class="ww-content">
+        <p class="ww-desc-text">{w.description}</p>
+        <div class="ww-links">
+          {w.links.map((l) => (
+            <a href={l.href} target="_blank" rel="noopener noreferrer" class="ww-link">{l.label}</a>
+          ))}
+        </div>
+        <p class="ww-stack">{w.stack}</p>
+      </div>
+    </div>
+  </div>
+))}
+
+<style>
+
+  .works-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .work-item {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    border-bottom: 1px dashed var(--border);
+    transition: border-color 0.15s;
+  }
+
+  .work-item:hover {
+    border-color: var(--border-hover);
+  }
+
+  .work-item:hover .work-item__open {
+    opacity: 1;
+  }
+
+  .work-item:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 3px;
+  }
+
+  .work-item__name {
+    font-size: 0.875rem;
+  }
+
+  .work-item__meta {
+    font-size: 0.75rem;
+    opacity: 0.45;
+  }
+
+  .work-item__open {
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+
+  .ww {
+    position: fixed;
+    z-index: 100;
+    top: 15vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(540px, calc(100vw - 2rem));
+    background: var(--ww-bg);
+    color: var(--ww-fg);
+    border: 1px solid var(--border);
+    font-size: 0.8125rem;
+    box-shadow: 4px 4px 0 var(--border);
+    opacity: 0;
+    scale: 0.97;
+    transition: opacity 0.18s ease, scale 0.18s ease;
+    user-select: none;
+  }
+
+  .ww:not([hidden]) {
+    opacity: 1;
+    scale: 1;
+  }
+
+  .ww-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    cursor: grab;
+    overflow: hidden;
+  }
+
+  .ww-titlebar:active { cursor: grabbing; }
+
+  .ww-titlebar__prompt {
+    color: var(--ww-prompt);
+    white-space: nowrap;
+  }
+
+  .ww-titlebar__sep {
+    opacity: 0.4;
+    padding-inline: 0.1rem;
+  }
+
+  .ww-titlebar__path {
+    opacity: 0.6;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .ww-close {
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.25rem 0.25rem 0.25rem 0.75rem;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+    min-height: 2rem;
+  }
+
+  .ww-close:hover { opacity: 1; }
+
+  .ww-close:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 2px;
+  }
+
+  .ww-body {
+    display: flex;
+    flex-direction: column;
+    user-select: text;
+  }
+
+  .ww-img-placeholder {
+    border-bottom: 1px solid var(--border);
+    height: 10rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.3;
+  }
+
+  .ww-img-placeholder__text {
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+
+  .ww-content {
+    padding: 1rem 0.875rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .ww-desc-text {
+    line-height: 1.6;
+    opacity: 0.85;
+  }
+
+  .ww-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .ww-link {
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+
+  .ww-link:hover { opacity: 1; text-decoration: underline; }
+
+  .ww-link:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 2px;
+  }
+
+  .ww-stack {
+    font-size: 0.7rem;
+    opacity: 0.35;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 560px) {
+    .work-item {
+      grid-template-columns: 1fr auto;
+    }
+    .work-item__open { display: none; }
+    .ww { top: 5vh; }
+  }
+</style>
+
+<script>
+  function initWorks() {
+    const triggers = document.querySelectorAll<HTMLButtonElement>('button[data-work]');
+    if (!triggers.length) return;
+
+    if ((window as any).__wwBound) return;
+    (window as any).__wwBound = true;
+
+    function makeDraggable(win: HTMLElement, handle: HTMLElement) {
+      let dragging = false;
+      let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+      function toAbsolute() {
+        const r = win.getBoundingClientRect();
+        win.style.transform = 'none';
+        win.style.left = r.left + 'px';
+        win.style.top = r.top + 'px';
+      }
+
+      handle.addEventListener('mousedown', (e) => {
+        if ((e.target as HTMLElement).closest('.ww-close')) return;
+        toAbsolute();
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = parseInt(win.style.left) || 0;
+        startTop = parseInt(win.style.top) || 0;
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        win.style.left = startLeft + (e.clientX - startX) + 'px';
+        win.style.top = startTop + (e.clientY - startY) + 'px';
+      });
+
+      document.addEventListener('mouseup', () => { dragging = false; });
+
+      handle.addEventListener('touchstart', (e) => {
+        if ((e.target as HTMLElement).closest('.ww-close')) return;
+        toAbsolute();
+        dragging = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startLeft = parseInt(win.style.left) || 0;
+        startTop = parseInt(win.style.top) || 0;
+      }, { passive: true });
+
+      document.addEventListener('touchmove', (e) => {
+        if (!dragging) return;
+        win.style.left = startLeft + (e.touches[0].clientX - startX) + 'px';
+        win.style.top = startTop + (e.touches[0].clientY - startY) + 'px';
+      }, { passive: true });
+
+      document.addEventListener('touchend', () => { dragging = false; });
+    }
+
+    triggers.forEach((trigger) => {
+      const workId = trigger.dataset.work!;
+      const win = document.getElementById(`ww-${workId}`) as HTMLElement | null;
+      if (!win) return;
+
+      const handle = win.querySelector<HTMLElement>('[data-drag-handle]')!;
+      const closeBtn = win.querySelector<HTMLButtonElement>('.ww-close')!;
+
+      makeDraggable(win, handle);
+
+      function openWindow() {
+        win!.hidden = false;
+        win!.style.left = '50%';
+        win!.style.top = '15vh';
+        win!.style.transform = 'translateX(-50%)';
+        closeBtn.focus();
+      }
+
+      function closeWindow() {
+        win!.hidden = true;
+        trigger.focus({ preventScroll: true });
+      }
+
+      trigger.addEventListener('click', openWindow);
+      closeBtn.addEventListener('click', closeWindow);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !win!.hidden) closeWindow();
+      });
+    });
+  }
+
+  initWorks();
+  document.addEventListener('astro:page-load', () => {
+    (window as any).__wwBound = false;
+    initWorks();
+  });
+</script>

@@ -17,6 +17,11 @@
   /* lightbox */
   --lightbox-img-border: #4b5563;
   --lightbox-caption: #d1d5db;
+
+  /* work window */
+  --ww-bg: #fafafa;
+  --ww-fg: #111827;
+  --ww-prompt: #16a34a;
 }
 
 .dark {
@@ -32,6 +37,11 @@
 
   --lightbox-img-border: #52525b;
   --lightbox-caption: #e4e4e7;
+
+  /* work window */
+  --ww-bg: #18181b;
+  --ww-fg: #f4f4f5;
+  --ww-prompt: #4ade80;
 }
 
 /* ── View transitions ── */

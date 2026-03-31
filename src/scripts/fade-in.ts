@@ -10,7 +10,7 @@ function initFadeIns(): void {
   const els = document.querySelectorAll<HTMLElement>('[data-fade-in]');
 
   for (const el of els) {
-    if (el.dataset.fadeInit === '1') return;
+    if (el.dataset.fadeInit === '1') continue;
     el.dataset.fadeInit = '1';
 
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {

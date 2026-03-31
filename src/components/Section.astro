@@ -1,0 +1,39 @@
+---
+interface Props {
+  class?: string;
+  dashed?: boolean;
+  delay?: number;
+}
+
+const { class: className, dashed = false, delay = 0 } = Astro.props;
+---
+
+<section
+  class:list={[
+    'section-card',
+    dashed && 'section-card--dashed',
+    className,
+  ]}
+  data-fade-in
+  data-fade-delay={delay}
+>
+  <slot />
+</section>
+
+<style>
+  .section-card {
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.25s ease, background-color 0.3s ease;
+  }
+
+  .section-card:hover {
+    border-color: var(--border-hover);
+    background-color: var(--surface-hover);
+  }
+
+  .section-card--dashed {
+    border-style: dashed;
+  }
+</style>

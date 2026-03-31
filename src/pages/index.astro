@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Section from '../components/Section.astro';
 import { Image } from 'astro:assets';
 import vulkanTriangle from '../images/vulkan-triangle.png';
 
@@ -15,13 +16,14 @@ const birthdayFormatted = 'September 3, 2008';
 ---
 
 <Layout title="Home">
-  <section class="border border-gray-300 dark:border-gray-700 p-6 mb-6">
+  <!-- Name -->
+  <Section delay={0}>
     <h1 class="text-4xl font-bold mb-1">Relmy Mathieu</h1>
     <p class="text-gray-600 dark:text-gray-400">Aspiring Nuclear Engineer, Dev, Nerd</p>
-  </section>
+  </Section>
 
-  <!-- Hero part -->
-  <section class="border border-gray-300 dark:border-gray-700 p-6 mb-6 space-y-2 text-sm">
+  <!-- Quick facts -->
+  <Section delay={0.07}>
     <p>☕ I love coffee</p>
     <p>🐱 I also love cats</p>
     <p>
@@ -29,10 +31,10 @@ const birthdayFormatted = 'September 3, 2008';
         I'm {age} yr old
       </span>
     </p>
-  </section>
+  </Section>
 
-  <section class="border border-gray-300 dark:border-gray-700 p-6 mb-6">
-    <!-- Hobbies, games, code part -->
+  <!-- Games & code -->
+  <Section delay={0.14}>
     <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Making games & code (a hobby)</h2>
     <p class="text-sm leading-relaxed">
       I code games. I'm working on my own
@@ -54,10 +56,10 @@ const birthdayFormatted = 'September 3, 2008';
       Coding is a fun way to pass time and to be creative. I like it a lot and I hope that my job will incorporate coding in some way.
       Who doesn't just open a big open source repo to read through the code and understand how it works, right?
     </p>
-  </section>
+  </Section>
 
-  <!-- Nuclear Engineering passion! -->
-  <section class="border border-gray-300 dark:border-gray-700 p-6 mb-6">
+  <!-- Nuclear engineering -->
+  <Section delay={0.2}>
     <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Nuclear Engineering</h2>
     <p class="text-sm leading-relaxed">
       I have a burning passion for nuclear engineering — reactors, their physics, the whole
@@ -65,9 +67,10 @@ const birthdayFormatted = 'September 3, 2008';
       gotten the time to work on it much yet. Maybe I'll share more about it in the future,
       on a blog post or something.
     </p>
-  </section>
+  </Section>
 </Layout>
 
+<!-- Engine preview lightbox -->
 <dialog id="engine-lightbox" class="lightbox" aria-labelledby="engine-lightbox-title" aria-describedby="engine-lightbox-caption">
   <div class="lightbox-inner">
     <div class="lightbox-controls">
@@ -80,6 +83,8 @@ const birthdayFormatted = 'September 3, 2008';
 </dialog>
 
 <style>
+  /* ── Hint tooltips ── */
+
   .dashed-hint {
     position: relative;
     cursor: help;
@@ -95,7 +100,7 @@ const birthdayFormatted = 'September 3, 2008';
     display: inline;
     cursor: pointer;
   }
-  
+
   .dashed-hint::after {
     content: attr(data-tip);
     position: absolute;
@@ -121,14 +126,13 @@ const birthdayFormatted = 'September 3, 2008';
     outline-offset: 3px;
   }
 
-  /* ── Lightbox stuff ── */
+  /* ── Lightbox ── */
+
   .lightbox {
     border: none;
     background: transparent;
     padding: 0;
     margin: auto;
-
-    /* entry/exit transition for lightbox */
     opacity: 0;
     transform: scale(0.95);
     transition:
@@ -230,7 +234,41 @@ const birthdayFormatted = 'September 3, 2008';
   }
 </style>
 
-<!-- Ugh... The lightbox script -->
+<!-- Motion.dev pop-in animations -->
+<script>
+  import { animate, inView } from 'motion';
+
+  function initFadeIns() {
+    const els = document.querySelectorAll<HTMLElement>('[data-fade-in]');
+
+    els.forEach((el) => {
+      if (el.dataset.fadeInit === '1') return;
+      el.dataset.fadeInit = '1';
+
+      const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+        return;
+      }
+
+      const delay = parseFloat(el.dataset.fadeDelay ?? '0');
+
+      inView(el, () => {
+        animate(
+          el as Element,
+          { opacity: [0, 1], transform: ['translateY(10px)', 'translateY(0)'] },
+          { duration: 0.55, delay, easing: [0.22, 1, 0.36, 1] },
+        );
+      }, { margin: '-50px 0px -50px 0px' });
+    });
+  }
+
+  initFadeIns();
+  document.addEventListener('astro:page-load', initFadeIns);
+</script>
+
+<!-- Lightbox script -->
 <script>
   function initLightbox() {
     const trigger = document.getElementById('engine-trigger') as HTMLButtonElement | null;

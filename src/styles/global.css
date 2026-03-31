@@ -2,29 +2,65 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light;
+
+  /* surface & text */
+  --surface-hover: rgba(0, 0, 0, 0.02);
+  --border: #d1d5db;
+  --border-hover: #9ca3af;
+
+  /* tooltip / hint */
   --hint-border: #6b7280;
   --hint-bg: #111827;
   --hint-fg: #f9fafb;
+
+  /* lightbox */
   --lightbox-img-border: #4b5563;
   --lightbox-caption: #d1d5db;
 }
+
 .dark {
+  color-scheme: dark;
+
+  --surface-hover: rgba(255, 255, 255, 0.03);
+  --border: #3f3f46;
+  --border-hover: #71717a;
+
   --hint-border: #9ca3af;
   --hint-bg: #0a0a0a;
   --hint-fg: #f4f4f5;
+
   --lightbox-img-border: #52525b;
   --lightbox-caption: #e4e4e7;
 }
+
+/* ── View transitions ── */
 
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.1s;
 }
 
+/* ── Fade-in initial state (motion.dev) ── */
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-fade-in] {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ── Reduced motion ── */
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 0s;
+  }
+
+  [data-fade-in] {
+    opacity: 1 !important;
+    transform: none !important;
   }
 
   *,

@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Section from '../components/Section.astro';
+import SocialLinks from '../components/SocialLinks.astro';
 import { Image } from 'astro:assets';
 import vulkanTriangle from '../images/vulkan-triangle.png';
 
@@ -20,6 +21,7 @@ const birthdayFormatted = 'September 3, 2008';
   <Section delay={0}>
     <h1 class="text-4xl font-bold mb-1">Relmy Mathieu</h1>
     <p class="text-gray-600 dark:text-gray-400">Aspiring Nuclear Engineer, Dev, Nerd</p>
+    <SocialLinks />
   </Section>
 
   <!-- Quick facts -->
@@ -234,38 +236,9 @@ const birthdayFormatted = 'September 3, 2008';
   }
 </style>
 
-<!-- Motion.dev pop-in animations -->
+<!-- Motion.dev fade-in animations (extracted) -->
 <script>
-  import { animate, inView } from 'motion';
-
-  function initFadeIns() {
-    const els = document.querySelectorAll<HTMLElement>('[data-fade-in]');
-
-    els.forEach((el) => {
-      if (el.dataset.fadeInit === '1') return;
-      el.dataset.fadeInit = '1';
-
-      const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReduced) {
-        el.style.opacity = '1';
-        el.style.transform = 'none';
-        return;
-      }
-
-      const delay = parseFloat(el.dataset.fadeDelay ?? '0');
-
-      inView(el, () => {
-        animate(
-          el as Element,
-          { opacity: [0, 1], transform: ['translateY(10px)', 'translateY(0)'] },
-          { duration: 0.55, delay, easing: [0.22, 1, 0.36, 1] },
-        );
-      }, { margin: '-50px 0px -50px 0px' });
-    });
-  }
-
-  initFadeIns();
-  document.addEventListener('astro:page-load', initFadeIns);
+  import '../scripts/fade-in';
 </script>
 
 <!-- Lightbox script -->

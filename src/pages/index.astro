@@ -25,7 +25,7 @@ const birthdayFormatted = 'September 3, 2008';
     <p>☕ I love coffee</p>
     <p>🐱 I also love cats</p>
     <p>
-      <span class="dashed-hint" data-tip={`Born ${birthdayFormatted} ;)`}>
+      <span class="dashed-hint" tabindex="0" aria-label={`Born ${birthdayFormatted}`} data-tip={`Born ${birthdayFormatted} ;)`}>
         I'm {age} yr old
       </span>
     </p>
@@ -36,7 +36,14 @@ const birthdayFormatted = 'September 3, 2008';
     <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Making games & code (a hobby)</h2>
     <p class="text-sm leading-relaxed">
       I code games. I'm working on my own
-      <button class="dashed-hint" id="engine-trigger" data-tip="click to peek 👀">game engine</button>
+      <button
+        class="dashed-hint"
+        id="engine-trigger"
+        type="button"
+        aria-haspopup="dialog"
+        aria-controls="engine-lightbox"
+        data-tip="click to peek 👀"
+      >game engine</button>
       (private for now) and have worked on
       a few games along the way. In my free time I also enjoy building web pages, which
       is kind of how this site exists.
@@ -61,22 +68,48 @@ const birthdayFormatted = 'September 3, 2008';
   </section>
 </Layout>
 
-<dialog id="engine-lightbox" class="lightbox">
+<dialog id="engine-lightbox" class="lightbox" aria-labelledby="engine-lightbox-title" aria-describedby="engine-lightbox-caption">
   <div class="lightbox-inner">
+    <div class="lightbox-controls">
+      <h2 id="engine-lightbox-title" class="lightbox-title">Game engine preview</h2>
+      <button id="engine-close" class="lightbox-close" type="button" aria-label="Close preview">Close</button>
+    </div>
     <Image src={vulkanTriangle} alt="First Vulkan triangle" class="lightbox-img" />
-    <p class="lightbox-caption">yaay first triangle in vulkan. (March 31st, 2026)</p>
+    <p id="engine-lightbox-caption" class="lightbox-caption">yaay first triangle in vulkan. (March 31st, 2026)</p>
   </div>
 </dialog>
 
 <style>
+  :root {
+    --hint-border: #6b7280;
+    --hint-bg: #111827;
+    --hint-fg: #f9fafb;
+    --lightbox-img-border: #4b5563;
+    --lightbox-caption: #d1d5db;
+  }
+
+  :global(.dark) {
+    --hint-border: #9ca3af;
+    --hint-bg: #0a0a0a;
+    --hint-fg: #f4f4f5;
+    --lightbox-img-border: #52525b;
+    --lightbox-caption: #e4e4e7;
+  }
+
   .dashed-hint {
     position: relative;
-    cursor: default;
-    border-bottom: 1px dashed #888;
+    cursor: help;
+    border-bottom: 1px dashed var(--hint-border);
     background: none;
     font: inherit;
     color: inherit;
     padding: 0;
+  }
+
+  #engine-trigger {
+    cursor: pointer;
+    min-height: 2.75rem;
+    line-height: 1.3;
   }
 
   .dashed-hint::after {
@@ -84,18 +117,25 @@ const birthdayFormatted = 'September 3, 2008';
     position: absolute;
     bottom: calc(100% + 6px);
     left: 0;
-    background: #111;
-    color: #fff;
+    background: var(--hint-bg);
+    color: var(--hint-fg);
     font-size: 0.75rem;
     padding: 4px 8px;
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s;
+    z-index: 10;
   }
 
-  .dashed-hint:hover::after { opacity: 1; }
-  #engine-trigger { cursor: pointer; }
+  .dashed-hint:hover::after,
+  .dashed-hint:focus-visible::after { opacity: 1; }
+
+  .dashed-hint:focus-visible,
+  .lightbox-close:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 3px;
+  }
 
   /* ── Lightbox stuff ── */
   .lightbox {
@@ -150,32 +190,91 @@ const birthdayFormatted = 'September 3, 2008';
     align-items: center;
     gap: 0.75rem;
     cursor: default;
+    padding: 0.5rem;
+  }
+
+  .lightbox-controls {
+    width: min(640px, 90vw);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .lightbox-title {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--lightbox-caption);
+  }
+
+  .lightbox-close {
+    border: 1px solid currentColor;
+    background: transparent;
+    color: var(--lightbox-caption);
+    font: inherit;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 0.45rem 0.75rem;
+    min-height: 2.75rem;
+    cursor: pointer;
   }
 
   .lightbox-img {
     max-width: min(640px, 90vw);
     max-height: 75vh;
     object-fit: contain;
-    border: 1px solid #444;
+    border: 1px solid var(--lightbox-img-border);
   }
 
   .lightbox-caption {
-    color: #ccc;
+    color: var(--lightbox-caption);
     font-family: monospace;
     font-size: 0.75rem;
+  }
+
+  @media (max-width: 640px) {
+    .lightbox-controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .dashed-hint::after {
+      white-space: normal;
+      max-width: min(15rem, 80vw);
+    }
   }
 </style>
 
 <!-- Ugh... The lightbox script -->
 <script>
   function initLightbox() {
-    const trigger = document.getElementById('engine-trigger');
+    const trigger = document.getElementById('engine-trigger') as HTMLButtonElement | null;
     const lightbox = document.getElementById('engine-lightbox') as HTMLDialogElement;
-    if (!trigger || !lightbox) return;
+    const closeBtn = document.getElementById('engine-close') as HTMLButtonElement | null;
+    if (!trigger || !lightbox || !closeBtn) return;
 
-    trigger.addEventListener('click', () => lightbox.showModal());
+    if (trigger.dataset.bound === 'true') return;
+    trigger.dataset.bound = 'true';
+
+    const openDialog = () => {
+      lightbox.showModal();
+      closeBtn.focus();
+    };
+
+    const closeDialog = () => {
+      lightbox.close();
+      trigger.focus();
+    };
+
+    trigger.addEventListener('click', openDialog);
+    closeBtn.addEventListener('click', closeDialog);
     lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) lightbox.close();
+      if (e.target === lightbox) closeDialog();
+    });
+
+    lightbox.addEventListener('close', () => {
+      if (document.activeElement !== trigger) trigger.focus();
     });
   }
 

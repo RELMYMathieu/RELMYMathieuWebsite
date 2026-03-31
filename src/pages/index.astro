@@ -1,17 +1,83 @@
 ---
-import "../styles/global.css";
+import Layout from '../layouts/Layout.astro';
+
+const birthday = new Date('2008-09-03');
+const now = new Date();
+let age = now.getFullYear() - birthday.getFullYear();
+if (
+  now.getMonth() < birthday.getMonth() ||
+  (now.getMonth() === birthday.getMonth() && now.getDate() < birthday.getDate())
+) age--;
+
+const birthdayFormatted = 'September 3, 2008';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1 class="text-3xl font-bold underline">Astro</h1>
-	</body>
-</html>
+<Layout title="Home">
+  <!-- Hero part -->
+  <section class="border border-gray-300 p-6 mb-6">
+    <h1 class="text-4xl font-bold mb-1">Relmy Mathieu</h1>
+    <p class="text-gray-600">Aspiring Engineer, Dev, Nerd</p>
+  </section>
+
+  <!-- Quick facts, for now! -->
+  <section class="border border-gray-300 p-6 mb-6 space-y-2 text-sm">
+    <p>☕ I love coffee</p>
+    <p>🐱 I also love cats</p>
+    <p>
+      <span
+        class="age-tooltip"
+        data-tip={`Born ${birthdayFormatted} ;)`}
+      >
+        I'm {age} yr old
+      </span>
+    </p>
+  </section>
+
+  <!-- Stuff I do on the side -->
+  <section class="border border-gray-300 p-6 mb-6">
+    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500">Games</h2>
+    <p class="text-sm leading-relaxed">
+      I code games. I'm working on my own game engine (private for now) and have worked on
+      a few games along the way. In my free time I also enjoy building web pages, which
+      is kind of how this site exists.
+    </p>
+  </section>
+
+  <!-- Nuclear engineering passion !!! -->
+  <section class="border border-gray-300 p-6 mb-6">
+    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500">Nuclear Engineering</h2>
+    <p class="text-sm leading-relaxed">
+      I have a burning passion for nuclear engineering — reactors, their physics, the whole
+      thing. I've got a nuclear engineering related game that's on the stove, but I haven't
+	  gotten the time to work on it much yet. Maybe I'll share more about it in the future,
+	  on a blog post or something.
+    </p>
+  </section>
+</Layout>
+
+<style>
+  .age-tooltip {
+    position: relative;
+    cursor: default;
+    border-bottom: 1px dashed #888;
+  }
+
+  .age-tooltip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    background: #111;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+
+  .age-tooltip:hover::after {
+    opacity: 1;
+  }
+</style>

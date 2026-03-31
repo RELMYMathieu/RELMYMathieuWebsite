@@ -80,38 +80,22 @@ const birthdayFormatted = 'September 3, 2008';
 </dialog>
 
 <style>
-  :root {
-    --hint-border: #6b7280;
-    --hint-bg: #111827;
-    --hint-fg: #f9fafb;
-    --lightbox-img-border: #4b5563;
-    --lightbox-caption: #d1d5db;
-  }
-
-  :global(.dark) {
-    --hint-border: #9ca3af;
-    --hint-bg: #0a0a0a;
-    --hint-fg: #f4f4f5;
-    --lightbox-img-border: #52525b;
-    --lightbox-caption: #e4e4e7;
-  }
-
   .dashed-hint {
     position: relative;
     cursor: help;
-    border-bottom: 1px dashed var(--hint-border);
+    text-decoration: underline dashed var(--hint-border);
+    text-underline-offset: 3px;
     background: none;
     font: inherit;
     color: inherit;
     padding: 0;
   }
 
-  #engine-trigger {
+  button.dashed-hint {
+    display: inline;
     cursor: pointer;
-    min-height: 2.75rem;
-    line-height: 1.3;
   }
-
+  
   .dashed-hint::after {
     content: attr(data-tip);
     position: absolute;

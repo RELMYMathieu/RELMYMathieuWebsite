@@ -1,6 +1,21 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --hint-border: #6b7280;
+  --hint-bg: #111827;
+  --hint-fg: #f9fafb;
+  --lightbox-img-border: #4b5563;
+  --lightbox-caption: #d1d5db;
+}
+.dark {
+  --hint-border: #9ca3af;
+  --hint-bg: #0a0a0a;
+  --hint-fg: #f4f4f5;
+  --lightbox-img-border: #52525b;
+  --lightbox-caption: #e4e4e7;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.1s;

@@ -54,10 +54,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </script>
   </head>
   <body class="min-h-screen bg-white dark:bg-zinc-900 text-black dark:text-zinc-100 font-mono theme-transition">
-    <nav class="border-b border-gray-300 dark:border-zinc-700 px-6 py-3 flex items-center gap-6 text-sm">
-      <a href="/" class="hover:underline inline-flex items-center min-h-11">~/home</a>
-      <a href="/blog" class="hover:underline inline-flex items-center min-h-11">~/blog</a>
-      <button id="theme-toggle" type="button" aria-label="Toggle theme" class="ml-auto cursor-pointer inline-flex items-center justify-center min-h-11 min-w-11 rounded"></button>
+    <nav class="h-14 border-b border-gray-300 dark:border-zinc-700 px-6 flex items-center gap-6 text-sm">
+      <a href="/" class="hover:underline">~/home</a>
+      <a href="/blog" class="hover:underline">~/blog</a>
+      <button id="theme-toggle" type="button" aria-label="Toggle theme" class="ml-auto cursor-pointer size-11 inline-flex items-center justify-center rounded"></button>
     </nav>
     <main class="max-w-2xl mx-auto px-6 py-10">
       <slot />
@@ -91,18 +91,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
 <style>
   .theme-transition {
-    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
-  }
-
-  .theme-transition nav,
-  .theme-transition main,
-  .theme-transition footer,
-  .theme-transition section,
-  .theme-transition a,
-  .theme-transition button,
-  .theme-transition p,
-  .theme-transition h1,
-  .theme-transition h2 {
     transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
   }
 </style>

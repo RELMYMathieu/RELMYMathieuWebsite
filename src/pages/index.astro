@@ -1,5 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import vulkanTriangle from '../images/vulkan-triangle.png';
 
 const birthday = new Date('2008-09-03');
 const now = new Date();
@@ -13,35 +15,33 @@ const birthdayFormatted = 'September 3, 2008';
 ---
 
 <Layout title="Home">
-  <!-- Hero part -->
-  <section class="border border-gray-300 p-6 mb-6">
+  <section class="border border-gray-300 dark:border-gray-700 p-6 mb-6">
     <h1 class="text-4xl font-bold mb-1">Relmy Mathieu</h1>
-    <p class="text-gray-600">Aspiring Nuclear Engineer, Dev, Nerd</p>
+    <p class="text-gray-600 dark:text-gray-400">Aspiring Nuclear Engineer, Dev, Nerd</p>
   </section>
 
-  <!-- Quick facts, for now! -->
-  <section class="border border-gray-300 p-6 mb-6 space-y-2 text-sm">
+  <!-- Hero part -->
+  <section class="border border-gray-300 dark:border-gray-700 p-6 mb-6 space-y-2 text-sm">
     <p>☕ I love coffee</p>
     <p>🐱 I also love cats</p>
     <p>
-      <span
-        class="age-tooltip"
-        data-tip={`Born ${birthdayFormatted} ;)`}
-      >
+      <span class="dashed-hint" data-tip={`Born ${birthdayFormatted} ;)`}>
         I'm {age} yr old
       </span>
     </p>
   </section>
 
-  <!-- Stuff I do on the side -->
-  <section class="border border-gray-300 p-6 mb-6">
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500">Making games & code (a hobby)</h2>
+  <section class="border border-gray-300 dark:border-gray-700 p-6 mb-6">
+    <!-- Hobbies, games, code part -->
+    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Making games & code (a hobby)</h2>
     <p class="text-sm leading-relaxed">
-      I code games. I'm working on my own game engine (private for now) and have worked on
+      I code games. I'm working on my own
+      <button class="dashed-hint" id="engine-trigger" data-tip="click to peek 👀">game engine</button>
+      (private for now) and have worked on
       a few games along the way. In my free time I also enjoy building web pages, which
       is kind of how this site exists.
-      <!-- Coding ramble thingy  -->
-      <p class="mt-4">
+    </p>
+    <p class="text-sm leading-relaxed mt-4">
       Furthermore, I also enjoy coding in my spare time, whether it's a small automation script,
       a game (seen earlier), a website for a friend, for a school project, or just tinkering with some code for fun.
       Coding is a fun way to pass time and to be creative. I like it a lot and I hope that my job will incorporate coding in some way.
@@ -49,26 +49,37 @@ const birthdayFormatted = 'September 3, 2008';
     </p>
   </section>
 
-  <!-- Nuclear engineering passion !!! -->
-  <section class="border border-gray-300 p-6 mb-6">
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500">Nuclear Engineering</h2>
+  <!-- Nuclear Engineering passion! -->
+  <section class="border border-gray-300 dark:border-gray-700 p-6 mb-6">
+    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Nuclear Engineering</h2>
     <p class="text-sm leading-relaxed">
       I have a burning passion for nuclear engineering — reactors, their physics, the whole
       thing. I've got a nuclear engineering related game that's on the stove, but I haven't
-	  gotten the time to work on it much yet. Maybe I'll share more about it in the future,
-	  on a blog post or something.
+      gotten the time to work on it much yet. Maybe I'll share more about it in the future,
+      on a blog post or something.
     </p>
   </section>
 </Layout>
 
+<dialog id="engine-lightbox" class="lightbox">
+  <div class="lightbox-inner">
+    <Image src={vulkanTriangle} alt="First Vulkan triangle" class="lightbox-img" />
+    <p class="lightbox-caption">yaay first triangle in vulkan. [YOUR DATE HERE]</p>
+  </div>
+</dialog>
+
 <style>
-  .age-tooltip {
+  .dashed-hint {
     position: relative;
     cursor: default;
     border-bottom: 1px dashed #888;
+    background: none;
+    font: inherit;
+    color: inherit;
+    padding: 0;
   }
 
-  .age-tooltip::after {
+  .dashed-hint::after {
     content: attr(data-tip);
     position: absolute;
     bottom: calc(100% + 6px);
@@ -83,7 +94,91 @@ const birthdayFormatted = 'September 3, 2008';
     transition: opacity 0.15s;
   }
 
-  .age-tooltip:hover::after {
+  .dashed-hint:hover::after { opacity: 1; }
+  #engine-trigger { cursor: pointer; }
+
+  /* ── Lightbox stuff ── */
+  .lightbox {
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: auto;
+
+    /* entry/exit transition for lightbox */
+    opacity: 0;
+    transform: scale(0.95);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease,
+      display 0.2s allow-discrete,
+      overlay 0.2s allow-discrete;
+  }
+
+  .lightbox[open] {
     opacity: 1;
+    transform: scale(1);
+  }
+
+  @starting-style {
+    .lightbox[open] {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+
+  .lightbox::backdrop {
+    background: rgba(0, 0, 0, 0);
+    transition:
+      background 0.2s ease,
+      display 0.2s allow-discrete,
+      overlay 0.2s allow-discrete;
+  }
+
+  .lightbox[open]::backdrop {
+    background: rgba(0, 0, 0, 0.85);
+  }
+
+  @starting-style {
+    .lightbox[open]::backdrop {
+      background: rgba(0, 0, 0, 0);
+    }
+  }
+
+  .lightbox-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: default;
+  }
+
+  .lightbox-img {
+    max-width: min(640px, 90vw);
+    max-height: 75vh;
+    object-fit: contain;
+    border: 1px solid #444;
+  }
+
+  .lightbox-caption {
+    color: #ccc;
+    font-family: monospace;
+    font-size: 0.75rem;
   }
 </style>
+
+<!-- Ugh... The lightbox script -->
+<script>
+  function initLightbox() {
+    const trigger = document.getElementById('engine-trigger');
+    const lightbox = document.getElementById('engine-lightbox') as HTMLDialogElement;
+    if (!trigger || !lightbox) return;
+
+    trigger.addEventListener('click', () => lightbox.showModal());
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) lightbox.close();
+    });
+  }
+
+  initLightbox();
+  document.addEventListener('astro:page-load', initLightbox);
+</script>

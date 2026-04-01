@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "flag-icons/css/flag-icons.min.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -81,4 +82,10 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ── flag stuff ── */
+.fi {
+  font-size: 0.85em;
+  vertical-align: -0.05em;
 }

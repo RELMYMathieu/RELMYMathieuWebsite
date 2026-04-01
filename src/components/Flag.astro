@@ -1,0 +1,14 @@
+---
+interface Props {
+  code: string;
+  label: string;
+  class?: string;
+}
+const { code, label, class: className } = Astro.props;
+---
+<span
+  class:list={[`fi fi-${code}`, className]}
+  role="img"
+  aria-label={label}
+  title={label}
+></span>

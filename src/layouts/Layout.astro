@@ -73,14 +73,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           <button
             id="lang-toggle"
             type="button"
-            aria-haspopup="listbox"
+            aria-haspopup="menu"
+            aria-controls="lang-menu"
             aria-expanded="false"
             aria-label="Switch language"
             class="nav-link cursor-pointer"
           >{lang === 'en' ? 'EN' : 'FR'} ▾</button>
-          <div class="lang-menu" id="lang-menu" hidden role="listbox">
-            <a href={enHref} role="option" aria-selected={lang === 'en'} class:list={['lang-option', { 'lang-option--active': lang === 'en' }]}>EN</a>
-            <a href={frHref} role="option" aria-selected={lang === 'fr-fr'} class:list={['lang-option', { 'lang-option--active': lang === 'fr-fr' }]}>FR</a>
+          <div class="lang-menu" id="lang-menu" hidden role="menu" aria-label="Language selector">
+            <a href={enHref} role="menuitem" lang="en" class:list={['lang-option', { 'lang-option--active': lang === 'en' }]} aria-current={lang === 'en' ? 'page' : undefined}>EN</a>
+            <a href={frHref} role="menuitem" lang="fr" class:list={['lang-option', { 'lang-option--active': lang === 'fr-fr' }]} aria-current={lang === 'fr-fr' ? 'page' : undefined}>FR</a>
           </div>
         </div>
         <button
@@ -129,16 +130,80 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         if (!toggle || !menu) return;
         if (toggle.dataset.bound === 'true') return;
         toggle.dataset.bound = 'true';
+        const options = Array.from(menu.querySelectorAll<HTMLAnchorElement>('a'));
 
-        const open = () => { menu.hidden = false; toggle.setAttribute('aria-expanded', 'true'); };
-        const close = () => { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); };
+        const focusItem = (index: number) => {
+          const item = options[index];
+          if (item) item.focus();
+        };
+
+        const open = () => {
+          menu.hidden = false;
+          toggle.setAttribute('aria-expanded', 'true');
+        };
+
+        const close = () => {
+          menu.hidden = true;
+          toggle.setAttribute('aria-expanded', 'false');
+        };
 
         toggle.addEventListener('click', (e) => {
           e.stopPropagation();
-          menu.hidden ? open() : close();
+          if (menu.hidden) {
+            open();
+            focusItem(0);
+          } else {
+            close();
+          }
         });
-        document.addEventListener('click', close);
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+        toggle.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            open();
+            focusItem(0);
+          }
+        });
+
+        menu.addEventListener('keydown', (e) => {
+          const current = document.activeElement as HTMLAnchorElement | null;
+          const index = current ? options.indexOf(current) : -1;
+
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            close();
+            toggle.focus();
+            return;
+          }
+
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            focusItem((index + 1) % options.length);
+          }
+
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            focusItem((index - 1 + options.length) % options.length);
+          }
+
+          if (e.key === 'Tab') {
+            close();
+          }
+        });
+
+        document.addEventListener('click', (e) => {
+          const target = e.target as Node | null;
+          if (menu.hidden) return;
+          if (toggle.contains(target) || menu.contains(target)) return;
+          close();
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key !== 'Escape') return;
+          if (menu.hidden) return;
+          close();
+          toggle.focus();
+        });
       }
       initLangDropdown();
       document.addEventListener('astro:page-load', initLangDropdown);
@@ -180,16 +245,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     position: absolute;
     right: 0;
     top: calc(100% + 2px);
-    background: var(--bg, white);
+    background: var(--menu-bg);
     border: 1px solid var(--border);
     min-width: 4rem;
     z-index: 50;
     display: flex;
     flex-direction: column;
-  }
-
-  :global(.dark) .lang-menu {
-    background: #18181b;
   }
 
   .lang-option {
@@ -201,6 +262,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
   .lang-option:hover {
     text-decoration: underline;
+  }
+
+  .lang-option:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 2px;
   }
 
   .lang-option--active {

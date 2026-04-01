@@ -29,7 +29,7 @@ const works: Work[] = [
 ---
 
 <Section delay={0}>
-  <h2 class="font-bold mb-3 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Works</h2>
+  <h2 class="font-bold mb-3 text-sm uppercase tracking-widest text-subtle">Works</h2>
   <ul class="works-list" role="list">
     {works.map((w) => (
       <li>
@@ -57,8 +57,10 @@ const works: Work[] = [
     class="ww"
     role="dialog"
     aria-modal="true"
+    aria-hidden="true"
     aria-labelledby={`ww-label-${w.id}`}
     aria-describedby={`ww-desc-${w.id}`}
+    tabindex="-1"
     data-work-id={w.id}
   >
     <div class="ww-titlebar" data-drag-handle>
@@ -68,7 +70,7 @@ const works: Work[] = [
       <button class="ww-close" type="button" aria-label={`Close ${w.name} window`}>[×]</button>
     </div>
     <div class="ww-body" id={`ww-desc-${w.id}`}>
-      <div class="ww-img-placeholder" aria-label="You are here">
+      <div class="ww-img-placeholder" aria-hidden="true">
         <span class="ww-img-placeholder__text" aria-hidden="true">[ you are here! ]</span>
       </div>
       <div class="ww-content">
@@ -100,7 +102,8 @@ const works: Work[] = [
     grid-template-columns: 1fr auto auto;
     align-items: baseline;
     gap: 0.75rem;
-    padding: 0.5rem 0;
+    padding: 0.625rem 0;
+    min-height: 2.75rem;
     background: none;
     border: none;
     font: inherit;
@@ -123,7 +126,7 @@ const works: Work[] = [
 
   .work-item__meta {
     font-size: 0.75rem;
-    opacity: 0.45;
+    opacity: 0.65;
   }
 
   .work-item__open {
@@ -214,10 +217,11 @@ const works: Work[] = [
     color: inherit;
     cursor: pointer;
     padding: 0.25rem 0.25rem 0.25rem 0.75rem;
-    opacity: 0.5;
+    opacity: 0.8;
     transition: opacity 0.15s;
     flex-shrink: 0;
-    min-height: 2rem;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
   }
 
   .ww-close:hover { opacity: 1; }
@@ -281,7 +285,7 @@ const works: Work[] = [
 
   .ww-stack {
     font-size: 0.7rem;
-    opacity: 0.35;
+    opacity: 0.55;
     letter-spacing: 0.04em;
   }
 
@@ -332,6 +336,16 @@ const works: Work[] = [
 
     const backdrop = document.getElementById('ww-backdrop')!;
     const isMobile = () => window.matchMedia('(max-width: 560px)').matches;
+    let activeWindow: HTMLElement | null = null;
+    let activeTrigger: HTMLButtonElement | null = null;
+
+    function getFocusableElements(win: HTMLElement): HTMLElement[] {
+      return Array.from(
+        win.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+    }
 
     function lockScroll() {
       const gap = window.innerWidth - document.documentElement.clientWidth;
@@ -342,6 +356,34 @@ const works: Work[] = [
     function unlockScroll() {
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
+    }
+
+    function closeActiveWindow() {
+      if (!activeWindow || !activeTrigger) return;
+      activeWindow.classList.remove('is-open');
+      activeWindow.setAttribute('aria-hidden', 'true');
+      backdrop.classList.remove('is-open');
+      unlockScroll();
+      activeTrigger.focus({ preventScroll: true });
+      activeWindow = null;
+      activeTrigger = null;
+    }
+
+    function openWindow(win: HTMLElement, trigger: HTMLButtonElement) {
+      if (!isMobile()) {
+        win.style.left = '50%';
+        win.style.top = '15vh';
+        win.style.translate = '-50% 0';
+      }
+      activeWindow = win;
+      activeTrigger = trigger;
+      win.classList.add('is-open');
+      win.setAttribute('aria-hidden', 'false');
+      backdrop.classList.add('is-open');
+      lockScroll();
+
+      const focusable = getFocusableElements(win);
+      (focusable[0] ?? win).focus();
     }
 
     function makeDraggable(win: HTMLElement, handle: HTMLElement) {
@@ -406,31 +448,41 @@ const works: Work[] = [
 
       makeDraggable(win, handle);
 
-      function openWindow() {
-        if (!isMobile()) {
-          win!.style.left = '50%';
-          win!.style.top = '15vh';
-          win!.style.translate = '-50% 0';
-        }
-        win!.classList.add('is-open');
-        backdrop.classList.add('is-open');
-        lockScroll();
-        closeBtn.focus();
+      trigger.addEventListener('click', () => openWindow(win, trigger));
+      closeBtn.addEventListener('click', closeActiveWindow);
+    });
+
+    backdrop.addEventListener('click', closeActiveWindow);
+
+    document.addEventListener('keydown', (e) => {
+      if (!activeWindow) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeActiveWindow();
+        return;
       }
 
-      function closeWindow() {
-        win!.classList.remove('is-open');
-        backdrop.classList.remove('is-open');
-        unlockScroll();
-        trigger.focus({ preventScroll: true });
+      if (e.key !== 'Tab') return;
+
+      const focusable = getFocusableElements(activeWindow);
+      if (!focusable.length) {
+        e.preventDefault();
+        activeWindow.focus();
+        return;
       }
 
-      trigger.addEventListener('click', openWindow);
-      closeBtn.addEventListener('click', closeWindow);
-      backdrop.addEventListener('click', closeWindow);
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && win!.classList.contains('is-open')) closeWindow();
-      });
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const current = document.activeElement;
+
+      if (e.shiftKey && current === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && current === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
   }
 

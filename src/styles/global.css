@@ -5,9 +5,13 @@
   color-scheme: light;
 
   /* surface & text */
+  --text-main: #111827;
+  --text-muted: #4b5563;
+  --text-subtle: #6b7280;
   --surface-hover: rgba(0, 0, 0, 0.02);
   --border: #d1d5db;
   --border-hover: #9ca3af;
+  --menu-bg: #ffffff;
 
   /* tooltip / hint */
   --hint-border: #6b7280;
@@ -27,9 +31,13 @@
 .dark {
   color-scheme: dark;
 
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-subtle: #a1a1aa;
   --surface-hover: rgba(255, 255, 255, 0.03);
   --border: #3f3f46;
   --border-hover: #71717a;
+  --menu-bg: #18181b;
 
   --hint-border: #9ca3af;
   --hint-bg: #0a0a0a;
@@ -42,6 +50,18 @@
   --ww-bg: #18181b;
   --ww-fg: #f4f4f5;
   --ww-prompt: #4ade80;
+}
+
+.text-main {
+  color: var(--text-main);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-subtle {
+  color: var(--text-subtle);
 }
 
 /* ── View transitions ── */

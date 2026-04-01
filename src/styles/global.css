@@ -25,6 +25,7 @@
   /* work window */
   --ww-bg: #fafafa;
   --ww-fg: #111827;
+  --ww-muted: #4b5563;
   --ww-prompt: #16a34a;
 }
 
@@ -49,6 +50,7 @@
   /* work window */
   --ww-bg: #18181b;
   --ww-fg: #f4f4f5;
+  --ww-muted: #a1a1aa;
   --ww-prompt: #4ade80;
 }
 

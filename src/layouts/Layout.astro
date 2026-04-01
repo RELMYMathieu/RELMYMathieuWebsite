@@ -96,7 +96,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <main class="max-w-2xl mx-auto px-6 py-10">
       <slot />
     </main>
-    <footer class="border-t border-gray-300 dark:border-zinc-700 px-6 py-3 text-xs text-gray-500 dark:text-zinc-500 text-center mt-10">
+    <footer class="footer-bar text-subtle px-6 py-3 text-xs text-center mt-10">
       <p>{t('footer.credit')}</p>
       <p class="mt-1">(｡･∀･)ﾉﾞ</p>
     </footer>
@@ -186,6 +186,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             focusItem((index - 1 + options.length) % options.length);
           }
 
+          if (e.key === 'Home') {
+            e.preventDefault();
+            focusItem(0);
+          }
+
+          if (e.key === 'End') {
+            e.preventDefault();
+            focusItem(options.length - 1);
+          }
+
           if (e.key === 'Tab') {
             close();
           }
@@ -271,5 +281,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
   .lang-option--active {
     font-weight: 700;
+  }
+
+  .footer-bar {
+    border-top: 1px solid var(--border);
   }
 </style>

@@ -126,7 +126,7 @@ const works: Work[] = [
 
   .work-item__meta {
     font-size: 0.75rem;
-    opacity: 0.65;
+    color: var(--text-subtle);
   }
 
   .work-item__open {
@@ -202,7 +202,7 @@ const works: Work[] = [
   }
 
   .ww-titlebar__path {
-    opacity: 0.6;
+    color: var(--ww-muted);
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -285,7 +285,7 @@ const works: Work[] = [
 
   .ww-stack {
     font-size: 0.7rem;
-    opacity: 0.55;
+    color: var(--ww-muted);
     letter-spacing: 0.04em;
   }
 
@@ -370,10 +370,15 @@ const works: Work[] = [
     }
 
     function openWindow(win: HTMLElement, trigger: HTMLButtonElement) {
+      if (activeWindow && activeWindow !== win) {
+        closeActiveWindow();
+      }
+
       if (!isMobile()) {
         win.style.left = '50%';
         win.style.top = '15vh';
         win.style.translate = '-50% 0';
+        win.style.transform = '';
       }
       activeWindow = win;
       activeTrigger = trigger;
@@ -389,6 +394,32 @@ const works: Work[] = [
     function makeDraggable(win: HTMLElement, handle: HTMLElement) {
       let dragging = false;
       let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+      let deltaX = 0, deltaY = 0;
+      let rafId = 0;
+
+      function renderPosition() {
+        rafId = 0;
+        win.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+      }
+
+      function queueRender() {
+        if (rafId) return;
+        rafId = requestAnimationFrame(renderPosition);
+      }
+
+      function stopDrag() {
+        if (!dragging) return;
+        dragging = false;
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+        win.style.left = startLeft + deltaX + 'px';
+        win.style.top = startTop + deltaY + 'px';
+        win.style.transform = '';
+        deltaX = 0;
+        deltaY = 0;
+      }
 
       function toAbsolute() {
         const r = win.getBoundingClientRect();
@@ -406,16 +437,19 @@ const works: Work[] = [
         startY = e.clientY;
         startLeft = parseInt(win.style.left) || 0;
         startTop = parseInt(win.style.top) || 0;
+        deltaX = 0;
+        deltaY = 0;
         e.preventDefault();
       });
 
       document.addEventListener('mousemove', (e) => {
         if (!dragging) return;
-        win.style.left = startLeft + (e.clientX - startX) + 'px';
-        win.style.top = startTop + (e.clientY - startY) + 'px';
+        deltaX = e.clientX - startX;
+        deltaY = e.clientY - startY;
+        queueRender();
       });
 
-      document.addEventListener('mouseup', () => { dragging = false; });
+      document.addEventListener('mouseup', stopDrag);
 
       handle.addEventListener('touchstart', (e) => {
         if (isMobile()) return;
@@ -426,16 +460,19 @@ const works: Work[] = [
         startY = e.touches[0].clientY;
         startLeft = parseInt(win.style.left) || 0;
         startTop = parseInt(win.style.top) || 0;
+        deltaX = 0;
+        deltaY = 0;
       }, { passive: true });
 
       handle.addEventListener('touchmove', (e) => {
         if (!dragging || isMobile()) return;
         e.preventDefault();
-        win.style.left = startLeft + (e.touches[0].clientX - startX) + 'px';
-        win.style.top = startTop + (e.touches[0].clientY - startY) + 'px';
+        deltaX = e.touches[0].clientX - startX;
+        deltaY = e.touches[0].clientY - startY;
+        queueRender();
       }, { passive: false });
 
-      document.addEventListener('touchend', () => { dragging = false; });
+      document.addEventListener('touchend', stopDrag);
     }
 
     triggers.forEach((trigger) => {

@@ -65,6 +65,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </script>
   </head>
   <body class="min-h-screen bg-white dark:bg-zinc-900 text-black dark:text-zinc-100 font-mono theme-transition">
+    <a href="#main-content" class="skip-link">Skip to content</a>
     <nav class="nav-bar">
       <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
       <a href={translatePath('/blog')} class="nav-link">{t('nav.blog')}</a>
@@ -93,14 +94,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         ></button>
       </div>
     </nav>
-    <main class="max-w-2xl mx-auto px-6 py-10">
+    <main id="main-content" class="max-w-2xl mx-auto px-6 py-10">
       <slot />
     </main>
     <footer class="footer-bar text-subtle px-6 py-3 text-xs text-center mt-10">
       <p>{t('footer.credit')}</p>
       <p class="mt-1">(｡･∀･)ﾉﾞ</p>
     </footer>
-    <!-- theme toggle script unchanged -->
     <script>
       function initToggle() {
         const btn = document.getElementById('theme-toggle');
@@ -222,6 +222,25 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 </html>
 
 <style>
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    background: var(--text-main);
+    color: var(--white, #ffffff);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    text-decoration: none;
+    z-index: 100;
+    transition: top 0.2s ease;
+  }
+
+  .skip-link:focus {
+    top: 0;
+    outline: 2px dashed currentColor;
+    outline-offset: 2px;
+  }
+
   .theme-transition {
     transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
   }
@@ -281,6 +300,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
   .lang-option--active {
     font-weight: 700;
+  }
+
+  #theme-toggle:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 3px;
   }
 
   .footer-bar {

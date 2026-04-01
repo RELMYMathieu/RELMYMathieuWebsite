@@ -451,28 +451,29 @@ const works: Work[] = [
 
       document.addEventListener('mouseup', stopDrag);
 
-      handle.addEventListener('touchstart', (e) => {
-        if (isMobile()) return;
-        if ((e.target as HTMLElement).closest('.ww-close')) return;
-        toAbsolute();
-        dragging = true;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        startLeft = parseInt(win.style.left) || 0;
-        startTop = parseInt(win.style.top) || 0;
-        deltaX = 0;
-        deltaY = 0;
-      }, { passive: true });
+      if (!isMobile()) {
+        handle.addEventListener('touchstart', (e) => {
+          if ((e.target as HTMLElement).closest('.ww-close')) return;
+          toAbsolute();
+          dragging = true;
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          startLeft = parseInt(win.style.left) || 0;
+          startTop = parseInt(win.style.top) || 0;
+          deltaX = 0;
+          deltaY = 0;
+        }, { passive: true });
 
-      handle.addEventListener('touchmove', (e) => {
-        if (!dragging || isMobile()) return;
-        e.preventDefault();
-        deltaX = e.touches[0].clientX - startX;
-        deltaY = e.touches[0].clientY - startY;
-        queueRender();
-      }, { passive: false });
+        handle.addEventListener('touchmove', (e) => {
+          if (!dragging) return;
+          e.preventDefault();
+          deltaX = e.touches[0].clientX - startX;
+          deltaY = e.touches[0].clientY - startY;
+          queueRender();
+        }, { passive: false });
 
-      document.addEventListener('touchend', stopDrag);
+        document.addEventListener('touchend', stopDrag);
+      }
     }
 
     triggers.forEach((trigger) => {

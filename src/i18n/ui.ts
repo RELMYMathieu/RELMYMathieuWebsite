@@ -21,9 +21,9 @@ export const ui = {
     'nav.home': '~/accueil',
     'nav.blog': '~/blog',
     'nav.lang': 'EN',
-    'footer.credit': 'Fait par Relmy Mathieu — propulsé par Astro.',
+    'footer.credit': 'Fait par Relmy Mathieu — construit avec Astro.',
     'blog.title': 'Blog',
-    'blog.subtitle': 'pensées, notes, bref.',
-    'blog.empty': 'Aucun article pour l\'instant — revenez plus tard.',
+    'blog.subtitle': 'pensées, notes, un peu de tout',
+    'blog.empty': 'Aucun post pour l\'instant — revenez plus tard.',
   },
 } as const;

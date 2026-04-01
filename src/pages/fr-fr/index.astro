@@ -1,10 +1,10 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Section from '../components/Section.astro';
-import SocialLinks from '../components/SocialLinks.astro';
-import Works from '../components/Works.astro';
+import Layout from '../../layouts/Layout.astro';
+import Section from '../../components/Section.astro';
+import SocialLinks from '../../components/SocialLinks.astro';
+import Works from '../../components/Works.astro';
 import { Image } from 'astro:assets';
-import vulkanTriangle from '../images/vulkan-triangle.png';
+import vulkanTriangle from '../../images/vulkan-triangle.png';
 
 const birthday = new Date('2008-09-03');
 const now = new Date();
@@ -14,83 +14,78 @@ if (
   (now.getMonth() === birthday.getMonth() && now.getDate() < birthday.getDate())
 ) age--;
 
-const birthdayFormatted = 'September 3, 2008';
+const birthdayFormatted = '3 septembre 2008';
 ---
 
-<Layout title="Home">
-  <!-- Name -->
+<Layout title="Accueil" description="Site personnel de Relmy Mathieu — aspirant ingénieur nucléaire, dev, geek.">
   <Section delay={0}>
     <h1 class="text-4xl font-bold mb-1">Relmy Mathieu</h1>
-    <p class="text-gray-600 dark:text-gray-400">Aspiring Nuclear Engineer, Dev, Nerd</p>
+    <p class="text-gray-600 dark:text-gray-400">Aspirant Ingénieur Nucléaire, Dev, Geek</p>
     <SocialLinks />
   </Section>
 
-  <!-- Quick facts -->
   <Section delay={0.07}>
-    <p>☕ I love coffee</p>
-    <p>🐱 I also love cats</p>
-    <p>🇫🇷 I'm French</p>
+    <p>☕ J'aime le café</p>
+    <p>🐱 J'aime aussi les chats</p>
+    <p>🇫🇷 Je suis Français</p>
     <p>
-      <span class="dashed-hint" tabindex="0" data-tip="Working on getting a proper diploma for it!">
-        I'm bilingual (🇫🇷 / 🇬🇧)
+      <span class="dashed-hint" tabindex="0" data-tip="J'y travaille — un diplôme officiel, c'est prévu !">
+        Je suis bilingue (🇫🇷 / 🇬🇧)
       </span>
     </p>
     <p>
-      <span class="dashed-hint" tabindex="0" aria-label={`Born ${birthdayFormatted}`} data-tip={`Born ${birthdayFormatted} ;)`}>
-        I'm {age} years old
+      <span class="dashed-hint" tabindex="0" aria-label={`Né le ${birthdayFormatted}`} data-tip={`Né le ${birthdayFormatted} ;)`}>
+        J'ai {age} ans
       </span>
     </p>
   </Section>
 
-  <!-- Games & code -->
   <Section delay={0.14}>
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Making games & code (a hobby)</h2>
+    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Jeux & code (un hobby)</h2>
     <p class="text-sm leading-relaxed">
-      I code games. I'm working on my own
+      Je développe des jeux. Je travaille sur mon propre
       <button
         class="dashed-hint"
         id="engine-trigger"
         type="button"
         aria-haspopup="dialog"
         aria-controls="engine-lightbox"
-        data-tip="click to peek 👀"
-      >game engine</button>
-      (private for now) and have worked on
-      a few games along the way. In my free time I also enjoy building web pages, which
-      is kind of how this site exists.
+        data-tip="clique pour jeter un œil 👀"
+      >moteur de jeu</button>
+      (privé pour l'instant) et j'ai travaillé sur quelques jeux au fil du temps.
+      Pendant mon temps libre, j'aime aussi créer des pages web — c'est un peu
+      pour ça que ce site existe.
     </p>
     <p class="text-sm leading-relaxed mt-4">
-      Furthermore, I also enjoy coding in my spare time, whether it's a small automation script,
-      a game (seen earlier), a website for a friend, for a school project, or just tinkering with some code for fun.
-      Coding is a fun way to pass time and to be creative. I like it a lot and I hope that my job will incorporate coding in some way.
-      Who doesn't just open a big open source repo to read through the code and understand how it works, right?
+      Plus généralement, j'aime coder dans mes temps libres, que ce soit un petit
+      script d'automatisation, un jeu, un site pour un ami, un projet scolaire, ou
+      juste pour le plaisir. Coder est une façon créative de passer le temps.
+      J'espère que mon futur métier y fera une place. Qui n'a jamais ouvert un
+      grand repo open source juste pour lire le code ?
     </p>
   </Section>
 
-  <!-- Nuclear engineering -->
   <Section delay={0.2}>
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Nuclear Engineering</h2>
+    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">Ingénierie Nucléaire</h2>
     <p class="text-sm leading-relaxed">
-      I have a burning passion for nuclear engineering — reactors, their physics, the whole
-      thing. I've got a nuclear engineering related game that's on the stove, but I haven't
-      gotten the time to work on it much yet. Maybe I'll share more about it in the future,
-      on a blog post or something.
+      J'ai une vraie passion pour l'ingénierie nucléaire — les réacteurs, leur
+      physique, tout ça. J'ai un jeu sur le sujet en cours de développement, mais
+      je n'ai pas encore eu le temps d'y consacrer beaucoup d'efforts. J'en
+      parlerai peut-être dans un article de blog un jour.
     </p>
   </Section>
 
-  <!-- Works -->
   <Works />
 </Layout>
 
-<!-- Engine preview lightbox -->
 <dialog id="engine-lightbox" class="lightbox" aria-labelledby="engine-lightbox-title" aria-describedby="engine-lightbox-caption">
   <div class="lightbox-inner">
     <div class="lightbox-controls">
-      <h2 id="engine-lightbox-title" class="lightbox-title">Game engine preview</h2>
-      <button id="engine-close" class="lightbox-close" type="button" aria-label="Close preview">Close</button>
+      <h2 id="engine-lightbox-title" class="lightbox-title">Aperçu du moteur</h2>
+      <button id="engine-close" class="lightbox-close" type="button" aria-label="Fermer l'aperçu">Fermer</button>
     </div>
-    <Image src={vulkanTriangle} alt="First Vulkan triangle" class="lightbox-img" />
-    <p id="engine-lightbox-caption" class="lightbox-caption">yaay first triangle in vulkan. (March 31st, 2026)</p>
+    <Image src={vulkanTriangle} alt="Premier triangle Vulkan" class="lightbox-img" />
+    <p id="engine-lightbox-caption" class="lightbox-caption">yaay premier triangle en vulkan. (31 mars 2026)</p>
   </div>
 </dialog>
 
@@ -248,7 +243,7 @@ const birthdayFormatted = 'September 3, 2008';
 
 <!-- Motion.dev fade-in animations (extracted) -->
 <script>
-  import '../scripts/fade-in';
+  import '../../scripts/fade-in';
 </script>
 
 <!-- Lightbox script -->

@@ -1,6 +1,7 @@
 ---
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
+import { getLangFromUrl, useTranslations, useTranslatedPath, getRawPath } from '../i18n/utils';
 
 interface Props {
   title: string;
@@ -12,10 +13,20 @@ const {
   description = "Relmy Mathieu's personal site — aspiring nuclear engineer, dev, nerd.",
 } = Astro.props;
 
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+
+// Alternate language link
+const rawPath = getRawPath(Astro.url, lang);
+const enHref = useTranslatedPath('en')(rawPath);
+const frHref = useTranslatedPath('fr-fr')(rawPath);
+
+const htmlLang = lang === 'fr-fr' ? 'fr-FR' : lang;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
-<html lang="en">
+<html lang={htmlLang}>
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -55,50 +66,82 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body class="min-h-screen bg-white dark:bg-zinc-900 text-black dark:text-zinc-100 font-mono theme-transition">
     <nav class="nav-bar">
-      <a href="/" class="nav-link">~/home</a>
-      <a href="/blog" class="nav-link">~/blog</a>
-      <button
-        id="theme-toggle"
-        type="button"
-        aria-label="Toggle theme"
-        aria-pressed="false"
-        class="ml-auto cursor-pointer size-11 inline-flex items-center justify-center rounded"
-      ></button>
+      <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
+      <a href={translatePath('/blog')} class="nav-link">{t('nav.blog')}</a>
+      <div class="ml-auto flex items-center">
+        <div class="lang-dropdown" id="lang-dropdown">
+          <button
+            id="lang-toggle"
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-label="Switch language"
+            class="nav-link cursor-pointer"
+          >{lang === 'en' ? 'EN' : 'FR'} ▾</button>
+          <div class="lang-menu" id="lang-menu" hidden role="listbox">
+            <a href={enHref} role="option" aria-selected={lang === 'en'} class:list={['lang-option', { 'lang-option--active': lang === 'en' }]}>EN</a>
+            <a href={frHref} role="option" aria-selected={lang === 'fr-fr'} class:list={['lang-option', { 'lang-option--active': lang === 'fr-fr' }]}>FR</a>
+          </div>
+        </div>
+        <button
+          id="theme-toggle"
+          type="button"
+          aria-label="Toggle theme"
+          aria-pressed="false"
+          class="cursor-pointer size-11 inline-flex items-center justify-center rounded"
+        ></button>
+      </div>
     </nav>
     <main class="max-w-2xl mx-auto px-6 py-10">
       <slot />
     </main>
     <footer class="border-t border-gray-300 dark:border-zinc-700 px-6 py-3 text-xs text-gray-500 dark:text-zinc-500 text-center mt-10">
-      <p>Made by Relmy Mathieu — built with Astro.</p>
+      <p>{t('footer.credit')}</p>
       <p class="mt-1">(｡･∀･)ﾉﾞ</p>
     </footer>
+    <!-- theme toggle script unchanged -->
     <script>
       function initToggle() {
         const btn = document.getElementById('theme-toggle');
         if (!btn) return;
-
         const isDark = () => document.documentElement.classList.contains('dark');
-
         const sync = () => {
           const dark = isDark();
           btn.textContent = dark ? '☀' : '☾';
           btn.setAttribute('aria-pressed', String(dark));
         };
-
         sync();
-
         if (btn.dataset.bound === 'true') return;
         btn.dataset.bound = 'true';
-
         btn.addEventListener('click', () => {
           const dark = document.documentElement.classList.toggle('dark');
           localStorage.setItem('theme', dark ? 'dark' : 'light');
           sync();
         });
       }
-
       initToggle();
       document.addEventListener('astro:page-load', initToggle);
+    </script>
+    <script>
+      function initLangDropdown() {
+        const toggle = document.getElementById('lang-toggle');
+        const menu = document.getElementById('lang-menu');
+        if (!toggle || !menu) return;
+        if (toggle.dataset.bound === 'true') return;
+        toggle.dataset.bound = 'true';
+
+        const open = () => { menu.hidden = false; toggle.setAttribute('aria-expanded', 'true'); };
+        const close = () => { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); };
+
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          menu.hidden ? open() : close();
+        });
+        document.addEventListener('click', close);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+      }
+      initLangDropdown();
+      document.addEventListener('astro:page-load', initLangDropdown);
     </script>
   </body>
 </html>
@@ -127,5 +170,40 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
   .nav-link:hover {
     text-decoration: underline;
+  }
+
+  .lang-dropdown {
+    position: relative;
+  }
+
+  .lang-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 2px);
+    background: var(--bg, white);
+    border: 1px solid var(--border);
+    min-width: 4rem;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.dark) .lang-menu {
+    background: #18181b;
+  }
+
+  .lang-option {
+    display: block;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .lang-option:hover {
+    text-decoration: underline;
+  }
+
+  .lang-option--active {
+    font-weight: 700;
   }
 </style>

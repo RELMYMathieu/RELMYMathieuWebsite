@@ -77,7 +77,7 @@ const works: Work[] = [
         <p class="ww-desc-text">{w.description}</p>
         <div class="ww-links">
           {w.links.map((l) => (
-            <a href={l.href} target="_blank" rel="noopener noreferrer" class="ww-link">{l.label}</a>
+            <a href={l.href} aria-label={l.label} target="_blank" rel="noopener noreferrer" class="ww-link">{l.label}</a>
           ))}
         </div>
         <p class="ww-stack">{w.stack}</p>

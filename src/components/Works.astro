@@ -1,6 +1,7 @@
 ---
 import Section from './Section.astro';
 import { useTranslations, type Lang } from '../i18n/utils';
+import { isLangFile, getWorkKey } from '../utils/collections';
 import { getCollection, render } from 'astro:content';
 
 interface Props {
@@ -10,42 +11,6 @@ interface Props {
 
 const { lang, delay = 0.2 } = Astro.props;
 const t = useTranslations(lang);
-
-function isLangFile(filePath: string | undefined, id: string, locale: string): boolean {
-  if (filePath) {
-    const normalizedPath = filePath.replace(/\\/g, '/');
-    const filename = normalizedPath.split('/').pop() ?? '';
-
-    if (filename === `${locale}.mdx` || filename === `${locale}.md`) return true;
-    if (filename.endsWith(`.${locale}.mdx`) || filename.endsWith(`.${locale}.md`)) return true;
-  }
-
-  const normalizedId = id.replace(/\\/g, '/');
-  return normalizedId === locale || normalizedId.endsWith(`/${locale}`) || normalizedId.endsWith(`.${locale}`);
-}
-
-function getWorkKey(filePath: string | undefined, id: string, locale: string): string {
-  if (filePath) {
-    const normalizedPath = filePath.replace(/\\/g, '/');
-    const segments = normalizedPath.split('/').filter(Boolean);
-    const parent = segments.at(-2);
-    const filename = segments.at(-1) ?? '';
-
-    if (parent) return parent;
-
-    const baseName = filename.replace(/\.(mdx|md)$/i, '');
-    if (baseName.endsWith(`.${locale}`)) {
-      return baseName.slice(0, -(locale.length + 1));
-    }
-    if (baseName === locale) {
-      return id.replace(/\.[^./\\]+$/, '').replace(/[\\/]/g, '-');
-    }
-
-    return baseName;
-  }
-
-  return id.replace(/\.[^./\\]+$/, '').replace(/[\\/]/g, '-');
-}
 
 const allWorks = await getCollection('works', ({ id, filePath }) => {
   return isLangFile(filePath, id, lang);
@@ -90,6 +55,7 @@ const works = await Promise.all(
       </li>
     ))}
   </ul>
+  <p class="mobile-hint">{t('works.mobile-hint')}</p>
 </Section>
 
 <div class="ww-backdrop" id="ww-backdrop" aria-hidden="true"></div>
@@ -121,7 +87,7 @@ const works = await Promise.all(
         <span class="ww-img-placeholder__text" aria-hidden="true">{t('works.placeholder')}</span>
       </div>
       <div class="ww-content">
-        <div class="ww-desc-text">
+        <div class="prose-mdx">
             <w.Content />
         </div>
         <div class="ww-links">
@@ -185,6 +151,25 @@ const works = await Promise.all(
     white-space: nowrap;
   }
 
+  .mobile-hint {
+    display: none;
+    margin-top: 1rem;
+    font-size: 0.7rem;
+    color: var(--text-subtle);
+    opacity: 0.6;
+    letter-spacing: 0.02em;
+  }
+
+  @media (max-width: 560px) {
+    .work-item {
+      grid-template-columns: 1fr auto;
+    }
+
+    .work-item__open { display: none; }
+
+    .mobile-hint { display: block; }
+  }
+
   /* ── Backdrop ── */
 
   .ww-backdrop {
@@ -236,7 +221,9 @@ const works = await Promise.all(
                 translate 0.22s ease;
   }
 
-  /* ── Fullscreen state ── */
+  .ww.is-open.is-dragging {
+    transition: none;
+  }
 
   .ww.is-fullscreen {
     top: 0 !important;
@@ -248,15 +235,8 @@ const works = await Promise.all(
     box-shadow: none;
   }
 
-  .ww.is-fullscreen .ww-titlebar {
-    cursor: default;
-  }
-
-  .ww.is-fullscreen .ww-body {
-    max-height: calc(100dvh - 2.5rem);
-  }
-
-  /* ── Minimized state ── */
+  .ww.is-fullscreen .ww-titlebar { cursor: default; }
+  .ww.is-fullscreen .ww-body { max-height: calc(100dvh - 2.5rem); }
 
   .ww.is-minimized {
     top: auto !important;
@@ -268,13 +248,8 @@ const works = await Promise.all(
     box-shadow: 2px 2px 0 var(--border);
   }
 
-  .ww.is-minimized .ww-body {
-    display: none;
-  }
-
-  .ww.is-minimized .ww-titlebar {
-    cursor: pointer;
-  }
+  .ww.is-minimized .ww-body { display: none; }
+  .ww.is-minimized .ww-titlebar { cursor: pointer; }
 
   /* ── Titlebar ── */
 
@@ -307,8 +282,6 @@ const works = await Promise.all(
     white-space: nowrap;
     min-width: 0;
   }
-
-  /* ── Window controls ── */
 
   .ww-controls {
     display: flex;
@@ -372,52 +345,6 @@ const works = await Promise.all(
     gap: 0.875rem;
   }
 
-  .ww-desc-text {
-    line-height: 1.6;
-    opacity: 0.85;
-  }
-
-  .ww-desc-text :global(p) {
-    margin-bottom: 0.75rem;
-  }
-
-  .ww-desc-text :global(p:last-child) {
-    margin-bottom: 0;
-  }
-
-  .ww-desc-text :global(strong) {
-    font-weight: 600;
-    opacity: 1;
-  }
-
-  .ww-desc-text :global(code) {
-    font-family: inherit;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 0.15rem 0.35rem;
-    border-radius: 3px;
-    font-size: 0.9em;
-  }
-
-  .ww-desc-text :global(pre) {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 0.75rem;
-    border-radius: 4px;
-    overflow-x: auto;
-    margin: 0.75rem 0;
-  }
-
-  .ww-desc-text :global(pre code) {
-    background: none;
-    padding: 0;
-  }
-
-  .ww-desc-text :global(img) {
-    max-width: 100%;
-    height: auto;
-    border-radius: 4px;
-    margin: 0.75rem 0;
-  }
-
   .ww-links {
     display: flex;
     flex-direction: column;
@@ -444,15 +371,7 @@ const works = await Promise.all(
     letter-spacing: 0.04em;
   }
 
-  /* ── Mobile ── */
-
   @media (max-width: 560px) {
-    .work-item {
-      grid-template-columns: 1fr auto;
-    }
-
-    .work-item__open { display: none; }
-
     .ww-ctrl--desktop { display: none; }
 
     .ww {
@@ -490,302 +409,17 @@ const works = await Promise.all(
     .ww-titlebar { cursor: default; }
 
     .ww-body {
-      overflow-y: auto;
       max-height: calc(85dvh - 2.5rem);
-      overscroll-behavior: contain;
     }
   }
 </style>
 
 <script>
-  function initWorks() {
-    const triggers = document.querySelectorAll<HTMLButtonElement>('button[data-work]');
-    if (!triggers.length) return;
+  import { initWorkWindows } from '../scripts/work-window';
 
-    if ((window as any).__wwBound) return;
-    (window as any).__wwBound = true;
-
-    const backdrop = document.getElementById('ww-backdrop')!;
-    const isMobile = () => window.matchMedia('(max-width: 560px)').matches;
-
-    let activeWindow: HTMLElement | null = null;
-    let activeTrigger: HTMLButtonElement | null = null;
-    let windowState: 'normal' | 'fullscreen' | 'minimized' = 'normal';
-
-    function getFocusableElements(win: HTMLElement): HTMLElement[] {
-      return Array.from(
-        win.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-    }
-
-    function lockScroll() {
-      const gap = window.innerWidth - document.documentElement.clientWidth;
-      if (gap > 0) document.body.style.paddingRight = gap + 'px';
-      document.body.style.overflow = 'hidden';
-    }
-
-    function unlockScroll() {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    }
-
-    function clearWindowState(win: HTMLElement) {
-      win.classList.remove('is-fullscreen', 'is-minimized');
-    }
-
-    function updateFullscreenIcon(win: HTMLElement) {
-      const btn = win.querySelector<HTMLButtonElement>('[data-action="fullscreen"]');
-      if (btn) btn.textContent = windowState === 'fullscreen' ? '[▪]' : '[□]';
-    }
-
-    function closeActiveWindow() {
-      if (!activeWindow || !activeTrigger) return;
-      clearWindowState(activeWindow);
-      activeWindow.classList.remove('is-open');
-      activeWindow.setAttribute('aria-hidden', 'true');
-      backdrop.classList.remove('is-open');
-      unlockScroll();
-      activeTrigger.focus({ preventScroll: true });
-      windowState = 'normal';
-      activeWindow = null;
-      activeTrigger = null;
-    }
-
-    function setNormal() {
-      if (!activeWindow) return;
-      clearWindowState(activeWindow);
-      windowState = 'normal';
-      backdrop.classList.add('is-open');
-      lockScroll();
-      updateFullscreenIcon(activeWindow);
-    }
-
-    function setFullscreen() {
-      if (!activeWindow) return;
-      clearWindowState(activeWindow);
-      activeWindow.classList.add('is-fullscreen');
-      windowState = 'fullscreen';
-      backdrop.classList.add('is-open');
-      lockScroll();
-      updateFullscreenIcon(activeWindow);
-    }
-
-    function setMinimized() {
-      if (!activeWindow) return;
-      clearWindowState(activeWindow);
-      activeWindow.classList.add('is-minimized');
-      windowState = 'minimized';
-      backdrop.classList.remove('is-open');
-      unlockScroll();
-      updateFullscreenIcon(activeWindow);
-    }
-
-    function handleAction(action: string) {
-      if (action === 'close') {
-        closeActiveWindow();
-        return;
-      }
-
-      if (action === 'minimize') {
-        if (windowState === 'minimized') {
-          setNormal();
-        } else {
-          setMinimized();
-        }
-        return;
-      }
-
-      if (action === 'fullscreen') {
-        if (windowState === 'fullscreen') {
-          setNormal();
-        } else {
-          setFullscreen();
-        }
-      }
-    }
-
-    function openWindow(win: HTMLElement, trigger: HTMLButtonElement) {
-      if (activeWindow && activeWindow !== win) {
-        closeActiveWindow();
-      }
-
-      if (!isMobile()) {
-        win.style.left = '50%';
-        win.style.top = '15vh';
-        win.style.translate = '-50% 0';
-        win.style.transform = '';
-      }
-
-      activeWindow = win;
-      activeTrigger = trigger;
-      windowState = 'normal';
-      clearWindowState(win);
-      win.classList.add('is-open');
-      win.setAttribute('aria-hidden', 'false');
-      backdrop.classList.add('is-open');
-      lockScroll();
-      updateFullscreenIcon(win);
-
-      const focusable = getFocusableElements(win);
-      (focusable[0] ?? win).focus();
-    }
-
-    function makeDraggable(win: HTMLElement, handle: HTMLElement) {
-      let dragging = false;
-      let startX = 0, startY = 0, startLeft = 0, startTop = 0;
-      let deltaX = 0, deltaY = 0;
-      let rafId = 0;
-
-      function renderPosition() {
-        rafId = 0;
-        win.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-      }
-
-      function queueRender() {
-        if (rafId) return;
-        rafId = requestAnimationFrame(renderPosition);
-      }
-
-      function stopDrag() {
-        if (!dragging) return;
-        dragging = false;
-        if (rafId) {
-          cancelAnimationFrame(rafId);
-          rafId = 0;
-        }
-        win.style.left = startLeft + deltaX + 'px';
-        win.style.top = startTop + deltaY + 'px';
-        win.style.transform = '';
-        deltaX = 0;
-        deltaY = 0;
-      }
-
-      function toAbsolute() {
-        const r = win.getBoundingClientRect();
-        win.style.translate = 'none';
-        win.style.left = r.left + 'px';
-        win.style.top = r.top + 'px';
-      }
-
-      function canDrag() {
-        return !isMobile() && windowState === 'normal';
-      }
-
-      handle.addEventListener('mousedown', (e) => {
-        if (!canDrag()) return;
-        if ((e.target as HTMLElement).closest('.ww-ctrl')) return;
-        toAbsolute();
-        dragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startLeft = parseInt(win.style.left) || 0;
-        startTop = parseInt(win.style.top) || 0;
-        deltaX = 0;
-        deltaY = 0;
-        e.preventDefault();
-      });
-
-      document.addEventListener('mousemove', (e) => {
-        if (!dragging) return;
-        deltaX = e.clientX - startX;
-        deltaY = e.clientY - startY;
-        queueRender();
-      });
-
-      document.addEventListener('mouseup', stopDrag);
-
-      handle.addEventListener('touchstart', (e) => {
-        if (!canDrag()) return;
-        if ((e.target as HTMLElement).closest('.ww-ctrl')) return;
-        toAbsolute();
-        dragging = true;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        startLeft = parseInt(win.style.left) || 0;
-        startTop = parseInt(win.style.top) || 0;
-        deltaX = 0;
-        deltaY = 0;
-      }, { passive: true });
-
-      handle.addEventListener('touchmove', (e) => {
-        if (!dragging) return;
-        e.preventDefault();
-        deltaX = e.touches[0].clientX - startX;
-        deltaY = e.touches[0].clientY - startY;
-        queueRender();
-      }, { passive: false });
-
-      document.addEventListener('touchend', stopDrag);
-    }
-
-    triggers.forEach((trigger) => {
-      const workId = trigger.dataset.work!;
-      const win = document.getElementById(`ww-${workId}`) as HTMLElement | null;
-      if (!win) return;
-
-      const handle = win.querySelector<HTMLElement>('[data-drag-handle]')!;
-      makeDraggable(win, handle);
-
-      trigger.addEventListener('click', () => openWindow(win, trigger));
-
-      win.addEventListener('click', (e) => {
-        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
-        if (!btn) return;
-        handleAction(btn.dataset.action!);
-      });
-
-      handle.addEventListener('click', (e) => {
-        if (windowState !== 'minimized') return;
-        if ((e.target as HTMLElement).closest('[data-action]')) return;
-        setNormal();
-      });
-    });
-
-    backdrop.addEventListener('click', closeActiveWindow);
-
-    document.addEventListener('keydown', (e) => {
-      if (!activeWindow) return;
-
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        if (windowState === 'fullscreen') {
-          setNormal();
-        } else {
-          closeActiveWindow();
-        }
-        return;
-      }
-
-      if (windowState === 'minimized') return;
-
-      if (e.key !== 'Tab') return;
-
-      const focusable = getFocusableElements(activeWindow);
-      if (!focusable.length) {
-        e.preventDefault();
-        activeWindow.focus();
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const current = document.activeElement;
-
-      if (e.shiftKey && current === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && current === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    });
-  }
-
-  initWorks();
+  initWorkWindows();
   document.addEventListener('astro:page-load', () => {
     (window as any).__wwBound = false;
-    initWorks();
+    initWorkWindows();
   });
 </script>

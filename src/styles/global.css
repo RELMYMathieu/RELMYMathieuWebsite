@@ -78,7 +78,6 @@
   --lightbox-img-border: var(--zinc-600);
   --lightbox-caption: var(--zinc-200);
 
-  /* work window */
   --ww-bg: var(--surface-bg);
   --ww-fg: var(--zinc-100);
   --ww-muted: var(--zinc-400);
@@ -144,6 +143,54 @@ button.dashed-hint {
     white-space: normal;
     max-width: min(15rem, 80vw);
   }
+}
+
+/* -- Prose (rendered MDX content and other cool things...) -- */
+
+.prose-mdx {
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.prose-mdx p {
+  margin-bottom: 0.75rem;
+}
+
+.prose-mdx p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-mdx strong {
+  font-weight: 600;
+  opacity: 1;
+}
+
+.prose-mdx code {
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.prose-mdx pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.prose-mdx pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose-mdx img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 0.75rem 0;
 }
 
 /* ── View transitions ── */

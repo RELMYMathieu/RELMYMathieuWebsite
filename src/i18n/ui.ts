@@ -20,6 +20,7 @@ export const ui = {
     'works.open': '[open]',
     'works.close': 'Close {name} window',
     'works.placeholder': '[ you are here! ]',
+    'works.mobile-hint': 'psst — try this on a bigger screen for the full experience',
   },
   'fr-fr': {
     'nav.home': '~/accueil',
@@ -33,5 +34,6 @@ export const ui = {
     'works.open': '[ouvrir]',
     'works.close': 'Fermer la fenêtre {name}',
     'works.placeholder': '[ vous êtes ici! ]',
+    'works.mobile-hint': 'psst — essayez sur un plus grand écran pour la meilleure expérience',
   },
 } as const;

@@ -60,12 +60,22 @@ export function initWorkWindows(): void {
 
   function close() {
     if (!activeWindow || !activeTrigger) return;
-    clearState(activeWindow);
-    activeWindow.classList.remove('is-open');
-    activeWindow.setAttribute('aria-hidden', 'true');
+    const win = activeWindow;
+
+    win.classList.remove('is-open');
+    win.setAttribute('aria-hidden', 'true');
     backdrop.classList.remove('is-open');
     unlockScroll();
     activeTrigger.focus({ preventScroll: true });
+
+    setTimeout(() => {
+      win.classList.remove('is-fullscreen', 'is-minimized');
+      win.style.left = '';
+      win.style.top = '';
+      win.style.translate = '';
+      win.style.transform = '';
+    }, 220);
+
     state = 'normal';
     activeWindow = null;
     activeTrigger = null;

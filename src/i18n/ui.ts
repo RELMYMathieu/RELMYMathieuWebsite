@@ -34,6 +34,6 @@ export const ui = {
     'works.open': '[ouvrir]',
     'works.close': 'Fermer la fenêtre {name}',
     'works.placeholder': '[ vous êtes ici! ]',
-    'works.mobile-hint': 'psst — essayez sur un plus grand écran pour la meilleure expérience',
+    'works.mobile-hint': 'psst — essayez sur un plus grand écran pour une meilleure expérience',
   },
 } as const;

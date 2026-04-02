@@ -1,5 +1,7 @@
 import { ui, defaultLang, showDefaultLang, type Lang } from './ui';
 
+export type { Lang };
+
 export function getLangFromUrl(url: URL): Lang {
   const first = url.pathname.split('/').filter(Boolean)[0];
   return (first && first in ui) ? first as Lang : defaultLang;

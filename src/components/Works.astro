@@ -1,35 +1,79 @@
 ---
 import Section from './Section.astro';
+import { useTranslations, type Lang } from '../i18n/utils';
+import { getCollection, render } from 'astro:content';
 
-interface Work {
-  id: string;
-  name: string;
-  meta: string;
-  path: string;
-  description: string;
-  links: { label: string; href: string }[];
-  stack: string;
+interface Props {
+  lang: Lang;
+  delay?: number;
 }
 
-const works: Work[] = [
-  {
-    id: 'relmy-site',
-    name: 'relmymathieu.me',
-    meta: 'web · astro · 2025-present',
-    path: '~/works/relmymathieu.me',
-    description:
-      "Personal portfolio & identity site. Built with Astro — static, fast, no framework overhead. The monospace aesthetic and terminal nav came naturally. It's a living thing.",
-    links: [
-      { label: '→ github.com/relmymathieu/RELMYMathieuWebsite', href: 'https://github.com/relmymathieu/RELMYMathieuWebsite' },
-      { label: '→ relmymathieu.me', href: 'https://relmymathieu.me' },
-    ],
-    stack: 'astro · tailwind · typescript · motion.dev',
-  },
-];
+const { lang, delay = 0.2 } = Astro.props;
+const t = useTranslations(lang);
+
+function isLangFile(filePath: string | undefined, id: string, locale: string): boolean {
+  if (filePath) {
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const filename = normalizedPath.split('/').pop() ?? '';
+
+    if (filename === `${locale}.mdx` || filename === `${locale}.md`) return true;
+    if (filename.endsWith(`.${locale}.mdx`) || filename.endsWith(`.${locale}.md`)) return true;
+  }
+
+  const normalizedId = id.replace(/\\/g, '/');
+  return normalizedId === locale || normalizedId.endsWith(`/${locale}`) || normalizedId.endsWith(`.${locale}`);
+}
+
+function getWorkKey(filePath: string | undefined, id: string, locale: string): string {
+  if (filePath) {
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const segments = normalizedPath.split('/').filter(Boolean);
+    const parent = segments.at(-2);
+    const filename = segments.at(-1) ?? '';
+
+    // In folder mode, parent folder is the stable work ID.
+    if (parent) return parent;
+
+    const baseName = filename.replace(/\.(mdx|md)$/i, '');
+    if (baseName.endsWith(`.${locale}`)) {
+      return baseName.slice(0, -(locale.length + 1));
+    }
+    if (baseName === locale) {
+      return id.replace(/\.[^./\\]+$/, '').replace(/[\\/]/g, '-');
+    }
+
+    return baseName;
+  }
+
+  return id.replace(/\.[^./\\]+$/, '').replace(/[\\/]/g, '-');
+}
+
+const allWorks = await getCollection('works', ({ id, filePath }) => {
+  return isLangFile(filePath, id, lang);
+});
+
+const works = await Promise.all(
+  allWorks
+    .sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0))
+    .map(async (work) => {
+      const { Content } = await render(work);
+      const workKey = getWorkKey(work.filePath, work.id, lang);
+
+      return {
+        id: workKey,
+        name: work.data.name,
+        meta: work.data.meta,
+        path: work.data.path,
+        links: work.data.links,
+        stack: work.data.stack,
+        Content,
+      };
+    }),
+);
 ---
 
-<Section delay={0}>
-  <h2 class="font-bold mb-3 text-sm uppercase tracking-widest text-subtle">Works</h2>
+<Section delay={delay}>
+  <h2 class="font-bold mb-3 text-sm uppercase tracking-widest text-subtle">{t('works.heading')}</h2>
   <ul class="works-list" role="list">
     {works.map((w) => (
       <li>
@@ -42,7 +86,7 @@ const works: Work[] = [
         >
           <span class="work-item__name">{w.name}</span>
           <span class="work-item__meta">{w.meta}</span>
-          <span class="work-item__open" aria-hidden="true">[open]</span>
+          <span class="work-item__open" aria-hidden="true">{t('works.open')}</span>
         </button>
       </li>
     ))}
@@ -67,14 +111,16 @@ const works: Work[] = [
       <span class="ww-titlebar__prompt" aria-hidden="true">work@relmy</span>
       <span class="ww-titlebar__sep" aria-hidden="true">:</span>
       <span class="ww-titlebar__path" id={`ww-label-${w.id}`}>{w.path}</span>
-      <button class="ww-close" type="button" aria-label={`Close ${w.name} window`}>[×]</button>
+      <button class="ww-close" type="button" aria-label={t('works.close').replace('{name}', w.name)}>[×]</button>
     </div>
     <div class="ww-body" id={`ww-desc-${w.id}`}>
       <div class="ww-img-placeholder" aria-hidden="true">
-        <span class="ww-img-placeholder__text" aria-hidden="true">[ you are here! ]</span>
+        <span class="ww-img-placeholder__text" aria-hidden="true">{t('works.placeholder')}</span>
       </div>
       <div class="ww-content">
-        <p class="ww-desc-text">{w.description}</p>
+        <div class="ww-desc-text">
+            <w.Content />
+        </div>
         <div class="ww-links">
           {w.links.map((l) => (
             <a href={l.href} aria-label={l.label} target="_blank" rel="noopener noreferrer" class="ww-link">{l.label}</a>
@@ -261,6 +307,48 @@ const works: Work[] = [
   .ww-desc-text {
     line-height: 1.6;
     opacity: 0.85;
+  }
+
+  /* MDX content styling */
+  .ww-desc-text :global(p) {
+    margin-bottom: 0.75rem;
+  }
+
+  .ww-desc-text :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .ww-desc-text :global(strong) {
+    font-weight: 600;
+    opacity: 1;
+  }
+
+  .ww-desc-text :global(code) {
+    font-family: inherit;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.15rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+
+  .ww-desc-text :global(pre) {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+  }
+
+  .ww-desc-text :global(pre code) {
+    background: none;
+    padding: 0;
+  }
+
+  .ww-desc-text :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 0.75rem 0;
   }
 
   .ww-links {

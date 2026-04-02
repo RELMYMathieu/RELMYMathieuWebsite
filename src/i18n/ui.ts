@@ -16,6 +16,10 @@ export const ui = {
     'blog.title': 'Blog',
     'blog.subtitle': 'thoughts, notes, whatever',
     'blog.empty': 'No posts yet — check back later.',
+    'works.heading': 'Works',
+    'works.open': '[open]',
+    'works.close': 'Close {name} window',
+    'works.placeholder': '[ you are here! ]',
   },
   'fr-fr': {
     'nav.home': '~/accueil',
@@ -25,5 +29,9 @@ export const ui = {
     'blog.title': 'Blog',
     'blog.subtitle': 'pensées, notes, un peu de tout',
     'blog.empty': 'Aucun post pour l\'instant — revenez plus tard.',
+    'works.heading': 'Projets',
+    'works.open': '[ouvrir]',
+    'works.close': 'Fermer la fenêtre {name}',
+    'works.placeholder': '[ vous êtes ici! ]',
   },
 } as const;

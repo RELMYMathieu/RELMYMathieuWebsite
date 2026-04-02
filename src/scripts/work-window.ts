@@ -33,11 +33,25 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
+function suppressTransitions(el: HTMLElement) {
+  el.style.transition = 'none';
+  el.offsetHeight;
+}
+
+function restoreTransitions(el: HTMLElement) {
+  el.style.transition = '';
+}
+
 function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard') {
   if (prefersReducedMotion()) return;
 
+  suppressTransitions(win);
   const to = win.getBoundingClientRect();
-  if (!from.width || !to.width) return;
+
+  if (!from.width || !to.width) {
+    restoreTransitions(win);
+    return;
+  }
 
   const dx = from.left - to.left;
   const dy = from.top - to.top;
@@ -124,6 +138,7 @@ function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard
   const animation = win.animate(keyframes, { duration, easing });
   const cleanup = () => {
     win.style.willChange = '';
+    restoreTransitions(win);
   };
 
   animation.addEventListener('finish', cleanup, { once: true });

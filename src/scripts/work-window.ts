@@ -1,8 +1,14 @@
 import { makeDraggable } from './draggable';
 
 type WindowState = 'normal' | 'fullscreen' | 'minimized';
+type FlipMode = 'standard' | 'fullscreen' | 'minimize' | 'restore';
+
+const DESKTOP_OPEN_TOP = '15vh';
+const EASE_OUT_QUART = 'cubic-bezier(0.25, 1, 0.5, 1)';
+const EASE_OUT_EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
 const isMobile = () => window.matchMedia('(max-width: 560px)').matches;
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function getFocusable(el: HTMLElement): HTMLElement[] {
   return Array.from(
@@ -27,7 +33,9 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-function flipAnimate(win: HTMLElement, from: DOMRect, glow = false) {
+function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard') {
+  if (prefersReducedMotion()) return;
+
   const to = win.getBoundingClientRect();
   if (!from.width || !to.width) return;
 
@@ -37,10 +45,11 @@ function flipAnimate(win: HTMLElement, from: DOMRect, glow = false) {
   const sy = from.height / to.height;
 
   const origin = 'top left';
-  const duration = glow ? 420 : 350;
-  const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
+  const duration =
+    mode === 'fullscreen' ? 480 : mode === 'minimize' ? 340 : mode === 'restore' ? 360 : 350;
+  const easing = mode === 'minimize' ? EASE_OUT_QUART : EASE_OUT_EXPO;
 
-  const keyframes: Keyframe[] = glow
+  const keyframes: Keyframe[] = mode === 'fullscreen'
     ? [
         {
           transformOrigin: origin,
@@ -50,10 +59,10 @@ function flipAnimate(win: HTMLElement, from: DOMRect, glow = false) {
         },
         {
           transformOrigin: origin,
-          transform: `translate(${dx * 0.3}px, ${dy * 0.3}px) scale(${lerp(sx, 1, 0.7)}, ${lerp(sy, 1, 0.7)})`,
+          transform: `translate(${dx * 0.22}px, ${dy * 0.22}px) scale(${lerp(sx, 1, 0.82)}, ${lerp(sy, 1, 0.82)})`,
           boxShadow: '0 0 60px 12px rgba(120, 120, 120, 0.1)',
-          opacity: 0.9,
-          offset: 0.45,
+          opacity: 0.96,
+          offset: 0.62,
         },
         {
           transformOrigin: origin,
@@ -62,7 +71,45 @@ function flipAnimate(win: HTMLElement, from: DOMRect, glow = false) {
           opacity: 1,
         },
       ]
-    : [
+    : mode === 'minimize'
+      ? [
+          {
+            transformOrigin: origin,
+            transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+            opacity: 1,
+          },
+          {
+            transformOrigin: origin,
+            transform: `translate(${dx * 0.36}px, ${dy * 0.72}px) scale(${lerp(sx, 1, 0.68)}, ${lerp(sy, 1, 0.52)})`,
+            opacity: 0.97,
+            offset: 0.56,
+          },
+          {
+            transformOrigin: origin,
+            transform: 'none',
+            opacity: 1,
+          },
+        ]
+      : mode === 'restore'
+        ? [
+            {
+              transformOrigin: origin,
+              transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+              opacity: 0.94,
+            },
+            {
+              transformOrigin: origin,
+              transform: `translate(${dx * 0.2}px, ${dy * 0.2}px) scale(${lerp(sx, 1, 0.86)}, ${lerp(sy, 1, 0.86)})`,
+              opacity: 1,
+              offset: 0.7,
+            },
+            {
+              transformOrigin: origin,
+              transform: 'none',
+              opacity: 1,
+            },
+          ]
+        : [
         {
           transformOrigin: origin,
           transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
@@ -71,9 +118,16 @@ function flipAnimate(win: HTMLElement, from: DOMRect, glow = false) {
           transformOrigin: origin,
           transform: 'none',
         },
-      ];
+          ];
 
-  win.animate(keyframes, { duration, easing });
+  win.style.willChange = 'transform, opacity';
+  const animation = win.animate(keyframes, { duration, easing });
+  const cleanup = () => {
+    win.style.willChange = '';
+  };
+
+  animation.addEventListener('finish', cleanup, { once: true });
+  animation.addEventListener('cancel', cleanup, { once: true });
 }
 
 export function initWorkWindows(): void {
@@ -100,8 +154,16 @@ export function initWorkWindows(): void {
   function applyState(next: WindowState) {
     if (!activeWindow) return;
 
+    const previousState = state;
     const first = activeWindow.getBoundingClientRect();
-    const goingFullscreen = next === 'fullscreen';
+    const mode: FlipMode =
+      next === 'fullscreen'
+        ? 'fullscreen'
+        : next === 'minimized'
+          ? 'minimize'
+          : previousState === 'minimized'
+            ? 'restore'
+            : 'standard';
 
     clearState(activeWindow);
     state = next;
@@ -114,7 +176,7 @@ export function initWorkWindows(): void {
     showBackdrop ? lockScroll() : unlockScroll();
     syncIcon(activeWindow);
 
-    flipAnimate(activeWindow, first, goingFullscreen);
+    flipAnimate(activeWindow, first, mode);
   }
 
   function close() {
@@ -152,7 +214,7 @@ export function initWorkWindows(): void {
     if (!isMobile()) {
       win.style.transition = 'none';
       win.style.left = '50%';
-      win.style.top = '5vh';
+      win.style.top = DESKTOP_OPEN_TOP;
       win.style.translate = '-50% 0';
       win.style.transform = '';
       win.offsetHeight;
@@ -168,6 +230,13 @@ export function initWorkWindows(): void {
     backdrop.classList.add('is-open');
     lockScroll();
     syncIcon(win);
+
+    if (!isMobile() && !prefersReducedMotion()) {
+      win.classList.remove('is-opening');
+      win.offsetHeight;
+      win.classList.add('is-opening');
+      window.setTimeout(() => win.classList.remove('is-opening'), 520);
+    }
 
     const focusable = getFocusable(win);
     (focusable[0] ?? win).focus();

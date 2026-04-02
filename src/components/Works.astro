@@ -207,18 +207,14 @@ const works = await Promise.all(
     user-select: none;
     visibility: hidden;
     opacity: 0;
-    transition: opacity 0.18s ease, scale 0.18s ease, visibility 0s linear 0.18s,
-                top 0.22s ease, left 0.22s ease, width 0.22s ease, height 0.22s ease,
-                translate 0.22s ease;
+    transition: opacity 0.18s ease, scale 0.18s ease, visibility 0s linear 0.18s;
   }
 
   .ww.is-open {
     visibility: visible;
     opacity: 1;
     scale: 1;
-    transition: opacity 0.18s ease, scale 0.18s ease, visibility 0s linear 0s,
-                top 0.22s ease, left 0.22s ease, width 0.22s ease, height 0.22s ease,
-                translate 0.22s ease;
+    transition: opacity 0.18s ease, scale 0.18s ease, visibility 0s linear 0s;
   }
 
   .ww.is-open.is-dragging {

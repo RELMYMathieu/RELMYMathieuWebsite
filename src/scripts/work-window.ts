@@ -23,6 +23,59 @@ function unlockScroll() {
   document.body.style.paddingRight = '';
 }
 
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function flipAnimate(win: HTMLElement, from: DOMRect, glow = false) {
+  const to = win.getBoundingClientRect();
+  if (!from.width || !to.width) return;
+
+  const dx = from.left - to.left;
+  const dy = from.top - to.top;
+  const sx = from.width / to.width;
+  const sy = from.height / to.height;
+
+  const origin = 'top left';
+  const duration = glow ? 420 : 350;
+  const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
+  const keyframes: Keyframe[] = glow
+    ? [
+        {
+          transformOrigin: origin,
+          transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+          boxShadow: '4px 4px 0 rgba(0, 0, 0, 0.15)',
+          opacity: 1,
+        },
+        {
+          transformOrigin: origin,
+          transform: `translate(${dx * 0.3}px, ${dy * 0.3}px) scale(${lerp(sx, 1, 0.7)}, ${lerp(sy, 1, 0.7)})`,
+          boxShadow: '0 0 60px 12px rgba(120, 120, 120, 0.1)',
+          opacity: 0.9,
+          offset: 0.45,
+        },
+        {
+          transformOrigin: origin,
+          transform: 'none',
+          boxShadow: 'none',
+          opacity: 1,
+        },
+      ]
+    : [
+        {
+          transformOrigin: origin,
+          transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        },
+        {
+          transformOrigin: origin,
+          transform: 'none',
+        },
+      ];
+
+  win.animate(keyframes, { duration, easing });
+}
+
 export function initWorkWindows(): void {
   const triggers = document.querySelectorAll<HTMLButtonElement>('button[data-work]');
   if (!triggers.length) return;
@@ -46,6 +99,10 @@ export function initWorkWindows(): void {
 
   function applyState(next: WindowState) {
     if (!activeWindow) return;
+
+    const first = activeWindow.getBoundingClientRect();
+    const goingFullscreen = next === 'fullscreen';
+
     clearState(activeWindow);
     state = next;
 
@@ -56,6 +113,8 @@ export function initWorkWindows(): void {
     backdrop.classList.toggle('is-open', showBackdrop);
     showBackdrop ? lockScroll() : unlockScroll();
     syncIcon(activeWindow);
+
+    flipAnimate(activeWindow, first, goingFullscreen);
   }
 
   function close() {
@@ -91,10 +150,13 @@ export function initWorkWindows(): void {
     if (activeWindow && activeWindow !== win) close();
 
     if (!isMobile()) {
+      win.style.transition = 'none';
       win.style.left = '50%';
-      win.style.top = '15vh';
+      win.style.top = '5vh';
       win.style.translate = '-50% 0';
       win.style.transform = '';
+      win.offsetHeight;
+      win.style.transition = '';
     }
 
     activeWindow = win;

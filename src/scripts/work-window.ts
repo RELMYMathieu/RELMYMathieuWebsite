@@ -3,7 +3,7 @@ import { makeDraggable } from './draggable';
 type WindowState = 'normal' | 'fullscreen' | 'minimized';
 type FlipMode = 'standard' | 'fullscreen' | 'minimize' | 'restore';
 
-const DESKTOP_OPEN_TOP = '15vh';
+const DESKTOP_OPEN_TOP = '20vh';
 const EASE_OUT_QUART = 'cubic-bezier(0.25, 1, 0.5, 1)';
 const EASE_OUT_EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
@@ -33,23 +33,24 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-function suppressTransitions(el: HTMLElement) {
+function freezeLayout(el: HTMLElement) {
+  el.getAnimations().forEach((a) => a.cancel());
   el.style.transition = 'none';
   el.offsetHeight;
 }
 
-function restoreTransitions(el: HTMLElement) {
+function unfreezeLayout(el: HTMLElement) {
   el.style.transition = '';
 }
 
 function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard') {
   if (prefersReducedMotion()) return;
 
-  suppressTransitions(win);
+  freezeLayout(win);
   const to = win.getBoundingClientRect();
 
   if (!from.width || !to.width) {
-    restoreTransitions(win);
+    unfreezeLayout(win);
     return;
   }
 
@@ -69,20 +70,17 @@ function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard
           transformOrigin: origin,
           transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
           boxShadow: '4px 4px 0 rgba(0, 0, 0, 0.15)',
-          opacity: 1,
         },
         {
           transformOrigin: origin,
           transform: `translate(${dx * 0.22}px, ${dy * 0.22}px) scale(${lerp(sx, 1, 0.82)}, ${lerp(sy, 1, 0.82)})`,
           boxShadow: '0 0 60px 12px rgba(120, 120, 120, 0.1)',
-          opacity: 0.96,
           offset: 0.62,
         },
         {
           transformOrigin: origin,
           transform: 'none',
           boxShadow: 'none',
-          opacity: 1,
         },
       ]
     : mode === 'minimize'
@@ -90,18 +88,15 @@ function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard
           {
             transformOrigin: origin,
             transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-            opacity: 1,
           },
           {
             transformOrigin: origin,
             transform: `translate(${dx * 0.36}px, ${dy * 0.72}px) scale(${lerp(sx, 1, 0.68)}, ${lerp(sy, 1, 0.52)})`,
-            opacity: 0.97,
             offset: 0.56,
           },
           {
             transformOrigin: origin,
             transform: 'none',
-            opacity: 1,
           },
         ]
       : mode === 'restore'
@@ -109,18 +104,15 @@ function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard
             {
               transformOrigin: origin,
               transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-              opacity: 0.94,
             },
             {
               transformOrigin: origin,
               transform: `translate(${dx * 0.2}px, ${dy * 0.2}px) scale(${lerp(sx, 1, 0.86)}, ${lerp(sy, 1, 0.86)})`,
-              opacity: 1,
               offset: 0.7,
             },
             {
               transformOrigin: origin,
               transform: 'none',
-              opacity: 1,
             },
           ]
         : [
@@ -134,11 +126,11 @@ function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard
         },
           ];
 
-  win.style.willChange = 'transform, opacity';
+  win.style.willChange = 'transform';
   const animation = win.animate(keyframes, { duration, easing });
   const cleanup = () => {
     win.style.willChange = '';
-    restoreTransitions(win);
+    unfreezeLayout(win);
   };
 
   animation.addEventListener('finish', cleanup, { once: true });
@@ -168,6 +160,8 @@ export function initWorkWindows(): void {
 
   function applyState(next: WindowState) {
     if (!activeWindow) return;
+
+    activeWindow.classList.remove('is-opening');
 
     const previousState = state;
     const first = activeWindow.getBoundingClientRect();

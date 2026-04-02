@@ -29,10 +29,6 @@ function unlockScroll() {
   document.body.style.paddingRight = '';
 }
 
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t;
-}
-
 function freezeLayout(el: HTMLElement) {
   el.getAnimations().forEach((a) => a.cancel());
   el.style.transition = 'none';
@@ -64,67 +60,18 @@ function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard
     mode === 'fullscreen' ? 480 : mode === 'minimize' ? 340 : mode === 'restore' ? 360 : 350;
   const easing = mode === 'minimize' ? EASE_OUT_QUART : EASE_OUT_EXPO;
 
-  const keyframes: Keyframe[] = mode === 'fullscreen'
-    ? [
-        {
-          transformOrigin: origin,
-          transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-          boxShadow: '4px 4px 0 rgba(0, 0, 0, 0.15)',
-        },
-        {
-          transformOrigin: origin,
-          transform: `translate(${dx * 0.22}px, ${dy * 0.22}px) scale(${lerp(sx, 1, 0.82)}, ${lerp(sy, 1, 0.82)})`,
-          boxShadow: '0 0 60px 12px rgba(120, 120, 120, 0.1)',
-          offset: 0.62,
-        },
-        {
-          transformOrigin: origin,
-          transform: 'none',
-          boxShadow: 'none',
-        },
-      ]
-    : mode === 'minimize'
-      ? [
-          {
-            transformOrigin: origin,
-            transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-          },
-          {
-            transformOrigin: origin,
-            transform: `translate(${dx * 0.36}px, ${dy * 0.72}px) scale(${lerp(sx, 1, 0.68)}, ${lerp(sy, 1, 0.52)})`,
-            offset: 0.56,
-          },
-          {
-            transformOrigin: origin,
-            transform: 'none',
-          },
-        ]
-      : mode === 'restore'
-        ? [
-            {
-              transformOrigin: origin,
-              transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-            },
-            {
-              transformOrigin: origin,
-              transform: `translate(${dx * 0.2}px, ${dy * 0.2}px) scale(${lerp(sx, 1, 0.86)}, ${lerp(sy, 1, 0.86)})`,
-              offset: 0.7,
-            },
-            {
-              transformOrigin: origin,
-              transform: 'none',
-            },
-          ]
-        : [
-        {
-          transformOrigin: origin,
-          transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-        },
-        {
-          transformOrigin: origin,
-          transform: 'none',
-        },
-          ];
+  const keyframes: Keyframe[] = [
+    {
+      transformOrigin: origin,
+      transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+      ...(mode === 'fullscreen' && { boxShadow: '4px 4px 0 rgba(0, 0, 0, 0.15)' }),
+    },
+    {
+      transformOrigin: origin,
+      transform: 'none',
+      ...(mode === 'fullscreen' && { boxShadow: 'none' }),
+    },
+  ];
 
   win.style.willChange = 'transform';
   const animation = win.animate(keyframes, { duration, easing });

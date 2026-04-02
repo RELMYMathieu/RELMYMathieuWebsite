@@ -11,7 +11,6 @@
   --gray-500: #6b7280;
   --gray-600: #4b5563;
   --gray-900: #111827;
-  --gray-950: #fafafa;
 
   /* base palette - core */
   --white: #ffffff;
@@ -23,6 +22,7 @@
   --text-main: var(--gray-900);
   --text-muted: var(--gray-600);
   --text-subtle: var(--gray-500);
+  --surface-bg: #fafafa;
   --surface-hover: rgba(0, 0, 0, 0.02);
   --border: var(--gray-300);
   --border-hover: var(--gray-400);
@@ -38,7 +38,7 @@
   --lightbox-caption: var(--gray-300);
 
   /* work window */
-  --ww-bg: var(--gray-950);
+  --ww-bg: var(--surface-bg);
   --ww-fg: var(--gray-900);
   --ww-muted: var(--gray-600);
   --ww-prompt: var(--green-600);
@@ -65,6 +65,7 @@
   --text-main: var(--zinc-100);
   --text-muted: var(--zinc-400);
   --text-subtle: var(--zinc-400);
+  --surface-bg: var(--zinc-900);
   --surface-hover: rgba(255, 255, 255, 0.03);
   --border: var(--zinc-700);
   --border-hover: var(--zinc-500);
@@ -78,7 +79,7 @@
   --lightbox-caption: var(--zinc-200);
 
   /* work window */
-  --ww-bg: var(--zinc-900);
+  --ww-bg: var(--surface-bg);
   --ww-fg: var(--zinc-100);
   --ww-muted: var(--zinc-400);
   --ww-prompt: var(--green-400);
@@ -94,6 +95,55 @@
 
 .text-subtle {
   color: var(--text-subtle);
+}
+
+/* ── Dashed hint tooltips (shared across pages) ── */
+
+.dashed-hint {
+  position: relative;
+  cursor: help;
+  text-decoration: underline dashed var(--hint-border);
+  text-underline-offset: 3px;
+  background: none;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+}
+
+button.dashed-hint {
+  display: inline;
+  cursor: pointer;
+}
+
+.dashed-hint::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: var(--hint-bg);
+  color: var(--hint-fg);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+
+.dashed-hint:hover::after,
+.dashed-hint:focus-visible::after { opacity: 1; }
+
+.dashed-hint:focus-visible {
+  outline: 2px dashed currentColor;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .dashed-hint::after {
+    white-space: normal;
+    max-width: min(15rem, 80vw);
+  }
 }
 
 /* ── View transitions ── */

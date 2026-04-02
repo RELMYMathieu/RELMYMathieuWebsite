@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Section from '../../components/Section.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
 import Works from '../../components/Works.astro';
-import { Image } from 'astro:assets';
+import Lightbox from '../../components/Lightbox.astro';
 import vulkanTriangle from '../../images/vulkan-triangle.png';
 
 const birthday = new Date('2008-09-03');
@@ -89,206 +89,16 @@ const birthdayFormatted = '3 septembre 2008';
   <Works lang="fr-fr" delay={0.2} />
 </Layout>
 
-<dialog id="engine-lightbox" class="lightbox" aria-labelledby="engine-lightbox-title" aria-describedby="engine-lightbox-caption">
-  <div class="lightbox-inner">
-    <div class="lightbox-controls">
-      <h2 id="engine-lightbox-title" class="lightbox-title">Aperçu du moteur</h2>
-      <button id="engine-close" class="lightbox-close" type="button" aria-label="Fermer l'aperçu">Fermer</button>
-    </div>
-    <Image src={vulkanTriangle} alt="Premier triangle Vulkan" class="lightbox-img" />
-    <p id="engine-lightbox-caption" class="lightbox-caption">yaay premier triangle en vulkan. (31 mars 2026)</p>
-  </div>
-</dialog>
+<Lightbox
+  id="engine-lightbox"
+  triggerId="engine-trigger"
+  title="Aperçu du moteur"
+  caption="yaay premier triangle en vulkan. (31 mars 2026)"
+  closeLabel="Fermer l'aperçu"
+  image={vulkanTriangle}
+  imageAlt="Premier triangle Vulkan"
+/>
 
-<style>
-  /* ── Hint tooltips ── */
-
-  .dashed-hint {
-    position: relative;
-    cursor: help;
-    text-decoration: underline dashed var(--hint-border);
-    text-underline-offset: 3px;
-    background: none;
-    font: inherit;
-    color: inherit;
-    padding: 0;
-  }
-
-  button.dashed-hint {
-    display: inline;
-    cursor: pointer;
-  }
-
-  .dashed-hint::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 0;
-    background: var(--hint-bg);
-    color: var(--hint-fg);
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s;
-    z-index: 10;
-  }
-
-  .dashed-hint:hover::after,
-  .dashed-hint:focus-visible::after { opacity: 1; }
-
-  .dashed-hint:focus-visible,
-  .lightbox-close:focus-visible {
-    outline: 2px dashed currentColor;
-    outline-offset: 3px;
-  }
-
-  /* ── Lightbox ── */
-
-  .lightbox {
-    border: none;
-    background: transparent;
-    padding: 0;
-    margin: auto;
-    opacity: 0;
-    transform: scale(0.95);
-    transition:
-      opacity 0.2s ease,
-      transform 0.2s ease,
-      display 0.2s allow-discrete,
-      overlay 0.2s allow-discrete;
-  }
-
-  .lightbox[open] {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  @starting-style {
-    .lightbox[open] {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-  }
-
-  .lightbox::backdrop {
-    background: rgba(0, 0, 0, 0);
-    transition:
-      background 0.2s ease,
-      display 0.2s allow-discrete,
-      overlay 0.2s allow-discrete;
-  }
-
-  .lightbox[open]::backdrop {
-    background: rgba(0, 0, 0, 0.85);
-  }
-
-  @starting-style {
-    .lightbox[open]::backdrop {
-      background: rgba(0, 0, 0, 0);
-    }
-  }
-
-  .lightbox-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    cursor: default;
-    padding: 0.5rem;
-  }
-
-  .lightbox-controls {
-    width: min(640px, 90vw);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .lightbox-title {
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--lightbox-caption);
-  }
-
-  .lightbox-close {
-    border: 1px solid currentColor;
-    background: transparent;
-    color: var(--lightbox-caption);
-    font: inherit;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    padding: 0.45rem 0.75rem;
-    min-height: 2.75rem;
-    cursor: pointer;
-  }
-
-  .lightbox-img {
-    max-width: min(640px, 90vw);
-    max-height: 75vh;
-    object-fit: contain;
-    border: 1px solid var(--lightbox-img-border);
-  }
-
-  .lightbox-caption {
-    color: var(--lightbox-caption);
-    font-family: monospace;
-    font-size: 0.75rem;
-  }
-
-  @media (max-width: 640px) {
-    .lightbox-controls {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .dashed-hint::after {
-      white-space: normal;
-      max-width: min(15rem, 80vw);
-    }
-  }
-</style>
-
-<!-- Motion.dev fade-in animations (extracted) -->
 <script>
   import '../../scripts/fade-in';
-</script>
-
-<!-- Lightbox script -->
-<script>
-  function initLightbox() {
-    const trigger = document.getElementById('engine-trigger') as HTMLButtonElement | null;
-    const lightbox = document.getElementById('engine-lightbox') as HTMLDialogElement;
-    const closeBtn = document.getElementById('engine-close') as HTMLButtonElement | null;
-    if (!trigger || !lightbox || !closeBtn) return;
-
-    if (trigger.dataset.bound === 'true') return;
-    trigger.dataset.bound = 'true';
-
-    const openDialog = () => {
-      lightbox.showModal();
-      closeBtn.focus();
-    };
-
-    const closeDialog = () => {
-      lightbox.close();
-      trigger.focus();
-    };
-
-    trigger.addEventListener('click', openDialog);
-    closeBtn.addEventListener('click', closeDialog);
-    lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) closeDialog();
-    });
-
-    lightbox.addEventListener('close', () => {
-      if (document.activeElement !== trigger) trigger.focus();
-    });
-  }
-
-  initLightbox();
-  document.addEventListener('astro:page-load', initLightbox);
 </script>

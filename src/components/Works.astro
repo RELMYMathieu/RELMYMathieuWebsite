@@ -31,7 +31,6 @@ function getWorkKey(filePath: string | undefined, id: string, locale: string): s
     const parent = segments.at(-2);
     const filename = segments.at(-1) ?? '';
 
-    // In folder mode, parent folder is the stable work ID.
     if (parent) return parent;
 
     const baseName = filename.replace(/\.(mdx|md)$/i, '');
@@ -111,7 +110,11 @@ const works = await Promise.all(
       <span class="ww-titlebar__prompt" aria-hidden="true">work@relmy</span>
       <span class="ww-titlebar__sep" aria-hidden="true">:</span>
       <span class="ww-titlebar__path" id={`ww-label-${w.id}`}>{w.path}</span>
-      <button class="ww-close" type="button" aria-label={t('works.close').replace('{name}', w.name)}>[×]</button>
+      <div class="ww-controls">
+        <button class="ww-ctrl ww-ctrl--desktop" data-action="minimize" type="button" aria-label="Minimize">[−]</button>
+        <button class="ww-ctrl ww-ctrl--desktop" data-action="fullscreen" type="button" aria-label="Fullscreen">[□]</button>
+        <button class="ww-ctrl" data-action="close" type="button" aria-label={t('works.close').replace('{name}', w.name)}>[×]</button>
+      </div>
     </div>
     <div class="ww-body" id={`ww-desc-${w.id}`}>
       <div class="ww-img-placeholder" aria-hidden="true">
@@ -181,7 +184,9 @@ const works = await Promise.all(
     transition: opacity 0.15s;
     white-space: nowrap;
   }
-  
+
+  /* ── Backdrop ── */
+
   .ww-backdrop {
     position: fixed;
     inset: 0;
@@ -199,6 +204,7 @@ const works = await Promise.all(
     transition: background 0.22s ease, visibility 0s linear 0s;
   }
 
+  /* ── Work window ── */
 
   .ww {
     position: fixed;
@@ -216,15 +222,61 @@ const works = await Promise.all(
     user-select: none;
     visibility: hidden;
     opacity: 0;
-    transition: opacity 0.18s ease, scale 0.18s ease, visibility 0s linear 0.18s;
+    transition: opacity 0.18s ease, scale 0.18s ease, visibility 0s linear 0.18s,
+                top 0.22s ease, left 0.22s ease, width 0.22s ease, height 0.22s ease,
+                translate 0.22s ease;
   }
 
   .ww.is-open {
     visibility: visible;
     opacity: 1;
     scale: 1;
-    transition: opacity 0.18s ease, scale 0.18s ease, visibility 0s linear 0s;
+    transition: opacity 0.18s ease, scale 0.18s ease, visibility 0s linear 0s,
+                top 0.22s ease, left 0.22s ease, width 0.22s ease, height 0.22s ease,
+                translate 0.22s ease;
   }
+
+  /* ── Fullscreen state ── */
+
+  .ww.is-fullscreen {
+    top: 0 !important;
+    left: 0 !important;
+    translate: 0 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    height: 100dvh;
+    box-shadow: none;
+  }
+
+  .ww.is-fullscreen .ww-titlebar {
+    cursor: default;
+  }
+
+  .ww.is-fullscreen .ww-body {
+    max-height: calc(100dvh - 2.5rem);
+  }
+
+  /* ── Minimized state ── */
+
+  .ww.is-minimized {
+    top: auto !important;
+    bottom: 1rem;
+    left: 1rem !important;
+    translate: 0 0 !important;
+    transform: none !important;
+    width: min(320px, calc(100vw - 2rem));
+    box-shadow: 2px 2px 0 var(--border);
+  }
+
+  .ww.is-minimized .ww-body {
+    display: none;
+  }
+
+  .ww.is-minimized .ww-titlebar {
+    cursor: pointer;
+  }
+
+  /* ── Titlebar ── */
 
   .ww-titlebar {
     display: flex;
@@ -256,31 +308,46 @@ const works = await Promise.all(
     min-width: 0;
   }
 
-  .ww-close {
+  /* ── Window controls ── */
+
+  .ww-controls {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .ww-ctrl {
     background: none;
     border: none;
     font: inherit;
     color: inherit;
     cursor: pointer;
-    padding: 0.25rem 0.25rem 0.25rem 0.75rem;
-    opacity: 0.8;
+    padding: 0.25rem 0.35rem;
+    opacity: 0.6;
     transition: opacity 0.15s;
-    flex-shrink: 0;
     min-height: 2.75rem;
-    min-width: 2.75rem;
+    min-width: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .ww-close:hover { opacity: 1; }
+  .ww-ctrl:hover { opacity: 1; }
 
-  .ww-close:focus-visible {
+  .ww-ctrl:focus-visible {
     outline: 2px dashed currentColor;
     outline-offset: 2px;
   }
+
+  /* ── Body ── */
 
   .ww-body {
     display: flex;
     flex-direction: column;
     user-select: text;
+    max-height: calc(70vh - 2.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .ww-img-placeholder {
@@ -290,6 +357,7 @@ const works = await Promise.all(
     align-items: center;
     justify-content: center;
     opacity: 0.3;
+    flex-shrink: 0;
   }
 
   .ww-img-placeholder__text {
@@ -309,7 +377,6 @@ const works = await Promise.all(
     opacity: 0.85;
   }
 
-  /* MDX content styling */
   .ww-desc-text :global(p) {
     margin-bottom: 0.75rem;
   }
@@ -377,12 +444,16 @@ const works = await Promise.all(
     letter-spacing: 0.04em;
   }
 
+  /* ── Mobile ── */
+
   @media (max-width: 560px) {
     .work-item {
       grid-template-columns: 1fr auto;
     }
 
     .work-item__open { display: none; }
+
+    .ww-ctrl--desktop { display: none; }
 
     .ww {
       top: auto !important;
@@ -402,6 +473,18 @@ const works = await Promise.all(
       scale: 1;
       opacity: 1;
       transition: translate 0.22s ease, visibility 0s linear 0s;
+    }
+
+    .ww.is-fullscreen,
+    .ww.is-minimized {
+      top: auto !important;
+      left: 0 !important;
+      bottom: 0;
+      translate: 0 0 !important;
+      transform: none !important;
+      width: 100%;
+      height: auto;
+      max-height: 85dvh;
     }
 
     .ww-titlebar { cursor: default; }
@@ -424,8 +507,10 @@ const works = await Promise.all(
 
     const backdrop = document.getElementById('ww-backdrop')!;
     const isMobile = () => window.matchMedia('(max-width: 560px)').matches;
+
     let activeWindow: HTMLElement | null = null;
     let activeTrigger: HTMLButtonElement | null = null;
+    let windowState: 'normal' | 'fullscreen' | 'minimized' = 'normal';
 
     function getFocusableElements(win: HTMLElement): HTMLElement[] {
       return Array.from(
@@ -446,15 +531,79 @@ const works = await Promise.all(
       document.body.style.paddingRight = '';
     }
 
+    function clearWindowState(win: HTMLElement) {
+      win.classList.remove('is-fullscreen', 'is-minimized');
+    }
+
+    function updateFullscreenIcon(win: HTMLElement) {
+      const btn = win.querySelector<HTMLButtonElement>('[data-action="fullscreen"]');
+      if (btn) btn.textContent = windowState === 'fullscreen' ? '[▪]' : '[□]';
+    }
+
     function closeActiveWindow() {
       if (!activeWindow || !activeTrigger) return;
+      clearWindowState(activeWindow);
       activeWindow.classList.remove('is-open');
       activeWindow.setAttribute('aria-hidden', 'true');
       backdrop.classList.remove('is-open');
       unlockScroll();
       activeTrigger.focus({ preventScroll: true });
+      windowState = 'normal';
       activeWindow = null;
       activeTrigger = null;
+    }
+
+    function setNormal() {
+      if (!activeWindow) return;
+      clearWindowState(activeWindow);
+      windowState = 'normal';
+      backdrop.classList.add('is-open');
+      lockScroll();
+      updateFullscreenIcon(activeWindow);
+    }
+
+    function setFullscreen() {
+      if (!activeWindow) return;
+      clearWindowState(activeWindow);
+      activeWindow.classList.add('is-fullscreen');
+      windowState = 'fullscreen';
+      backdrop.classList.add('is-open');
+      lockScroll();
+      updateFullscreenIcon(activeWindow);
+    }
+
+    function setMinimized() {
+      if (!activeWindow) return;
+      clearWindowState(activeWindow);
+      activeWindow.classList.add('is-minimized');
+      windowState = 'minimized';
+      backdrop.classList.remove('is-open');
+      unlockScroll();
+      updateFullscreenIcon(activeWindow);
+    }
+
+    function handleAction(action: string) {
+      if (action === 'close') {
+        closeActiveWindow();
+        return;
+      }
+
+      if (action === 'minimize') {
+        if (windowState === 'minimized') {
+          setNormal();
+        } else {
+          setMinimized();
+        }
+        return;
+      }
+
+      if (action === 'fullscreen') {
+        if (windowState === 'fullscreen') {
+          setNormal();
+        } else {
+          setFullscreen();
+        }
+      }
     }
 
     function openWindow(win: HTMLElement, trigger: HTMLButtonElement) {
@@ -468,12 +617,16 @@ const works = await Promise.all(
         win.style.translate = '-50% 0';
         win.style.transform = '';
       }
+
       activeWindow = win;
       activeTrigger = trigger;
+      windowState = 'normal';
+      clearWindowState(win);
       win.classList.add('is-open');
       win.setAttribute('aria-hidden', 'false');
       backdrop.classList.add('is-open');
       lockScroll();
+      updateFullscreenIcon(win);
 
       const focusable = getFocusableElements(win);
       (focusable[0] ?? win).focus();
@@ -516,9 +669,13 @@ const works = await Promise.all(
         win.style.top = r.top + 'px';
       }
 
+      function canDrag() {
+        return !isMobile() && windowState === 'normal';
+      }
+
       handle.addEventListener('mousedown', (e) => {
-        if (isMobile()) return;
-        if ((e.target as HTMLElement).closest('.ww-close')) return;
+        if (!canDrag()) return;
+        if ((e.target as HTMLElement).closest('.ww-ctrl')) return;
         toAbsolute();
         dragging = true;
         startX = e.clientX;
@@ -539,29 +696,28 @@ const works = await Promise.all(
 
       document.addEventListener('mouseup', stopDrag);
 
-      if (!isMobile()) {
-        handle.addEventListener('touchstart', (e) => {
-          if ((e.target as HTMLElement).closest('.ww-close')) return;
-          toAbsolute();
-          dragging = true;
-          startX = e.touches[0].clientX;
-          startY = e.touches[0].clientY;
-          startLeft = parseInt(win.style.left) || 0;
-          startTop = parseInt(win.style.top) || 0;
-          deltaX = 0;
-          deltaY = 0;
-        }, { passive: true });
+      handle.addEventListener('touchstart', (e) => {
+        if (!canDrag()) return;
+        if ((e.target as HTMLElement).closest('.ww-ctrl')) return;
+        toAbsolute();
+        dragging = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startLeft = parseInt(win.style.left) || 0;
+        startTop = parseInt(win.style.top) || 0;
+        deltaX = 0;
+        deltaY = 0;
+      }, { passive: true });
 
-        handle.addEventListener('touchmove', (e) => {
-          if (!dragging) return;
-          e.preventDefault();
-          deltaX = e.touches[0].clientX - startX;
-          deltaY = e.touches[0].clientY - startY;
-          queueRender();
-        }, { passive: false });
+      handle.addEventListener('touchmove', (e) => {
+        if (!dragging) return;
+        e.preventDefault();
+        deltaX = e.touches[0].clientX - startX;
+        deltaY = e.touches[0].clientY - startY;
+        queueRender();
+      }, { passive: false });
 
-        document.addEventListener('touchend', stopDrag);
-      }
+      document.addEventListener('touchend', stopDrag);
     }
 
     triggers.forEach((trigger) => {
@@ -570,12 +726,21 @@ const works = await Promise.all(
       if (!win) return;
 
       const handle = win.querySelector<HTMLElement>('[data-drag-handle]')!;
-      const closeBtn = win.querySelector<HTMLButtonElement>('.ww-close')!;
-
       makeDraggable(win, handle);
 
       trigger.addEventListener('click', () => openWindow(win, trigger));
-      closeBtn.addEventListener('click', closeActiveWindow);
+
+      win.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
+        if (!btn) return;
+        handleAction(btn.dataset.action!);
+      });
+
+      handle.addEventListener('click', (e) => {
+        if (windowState !== 'minimized') return;
+        if ((e.target as HTMLElement).closest('[data-action]')) return;
+        setNormal();
+      });
     });
 
     backdrop.addEventListener('click', closeActiveWindow);
@@ -585,9 +750,15 @@ const works = await Promise.all(
 
       if (e.key === 'Escape') {
         e.preventDefault();
-        closeActiveWindow();
+        if (windowState === 'fullscreen') {
+          setNormal();
+        } else {
+          closeActiveWindow();
+        }
         return;
       }
+
+      if (windowState === 'minimized') return;
 
       if (e.key !== 'Tab') return;
 

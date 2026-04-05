@@ -19,10 +19,8 @@ function initFadeIns(): void {
       return;
     }
 
-    const delay = parseFloat(el.dataset.fadeDelay ?? '0');
-
-  const stagger = parseFloat(el.dataset.fadeDelay ?? '0');
-  const inInitialViewport = el.getBoundingClientRect().top < window.innerHeight;
+    const stagger = parseFloat(el.dataset.fadeDelay ?? '0');
+    const inInitialViewport = el.getBoundingClientRect().top < window.innerHeight;
 
     inView(
       el,

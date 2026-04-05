@@ -21,16 +21,19 @@ function initFadeIns(): void {
 
     const delay = parseFloat(el.dataset.fadeDelay ?? '0');
 
+  const stagger = parseFloat(el.dataset.fadeDelay ?? '0');
+  const inInitialViewport = el.getBoundingClientRect().top < window.innerHeight;
+
     inView(
       el,
       () => {
         animate(el, KEYFRAMES, {
           duration: 0.45,
-          delay,
+          delay: inInitialViewport ? stagger : 0,
           ease: [0.22, 1, 0.36, 1],
         });
       },
-      { margin: '-50px 0px -50px 0px' },
+      { margin: '0px' },
     );
   }
 }

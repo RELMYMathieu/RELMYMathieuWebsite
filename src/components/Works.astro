@@ -30,6 +30,7 @@ const works = await Promise.all(
         path: work.data.path,
         links: work.data.links,
         stack: work.data.stack,
+        image: work.data.image,
         Content,
       };
     }),
@@ -83,9 +84,15 @@ const works = await Promise.all(
       </div>
     </div>
     <div class="ww-body" id={`ww-desc-${w.id}`}>
-      <div class="ww-img-placeholder" aria-hidden="true">
-        <span class="ww-img-placeholder__text" aria-hidden="true">{t('works.placeholder')}</span>
-      </div>
+      {w.image ? (
+        <div class="ww-header-img-wrap">
+          <img src={w.image} alt={w.name} class="ww-header-img" />
+        </div>
+      ) : (
+        <div class="ww-img-placeholder" aria-hidden="true">
+          <span class="ww-img-placeholder__text" aria-hidden="true">{t('works.placeholder')}</span>
+        </div>
+      )}
       <div class="ww-content">
         <div class="prose-mdx">
             <w.Content />
@@ -371,6 +378,27 @@ const works = await Promise.all(
   .ww-img-placeholder__text {
     font-size: 0.75rem;
     letter-spacing: 0.05em;
+  }
+
+  .ww-header-img-wrap {
+    border-bottom: 1px solid var(--border);
+    height: 12rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .dark .ww-header-img-wrap {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .ww-header-img {
+    max-height: 90%;
+    max-width: 90%;
+    object-fit: contain;
   }
 
   .ww-content {

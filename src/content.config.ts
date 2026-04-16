@@ -20,6 +20,7 @@ const works = defineCollection({
       href: z.string().url(),
     })),
     stack: z.string(),
+    image: z.string().url().optional(),
     order: z.number().optional().default(0),
   }),
 });

@@ -16,7 +16,7 @@ function initFadeIns(): void {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
       el.style.opacity = '1';
       el.style.transform = 'none';
-      return;
+      continue;
     }
 
     const stagger = parseFloat(el.dataset.fadeDelay ?? '0');

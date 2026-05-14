@@ -4,7 +4,6 @@ import type { ImageMetadata } from 'astro';
 
 interface Props {
   id: string;
-  triggerId: string;
   title: string;
   caption: string;
   closeLabel: string;
@@ -13,7 +12,7 @@ interface Props {
   imageAlt: string;
 }
 
-const { id, triggerId, title, caption, closeLabel, closeText, image, imageAlt } = Astro.props;
+const { id, title, caption, closeLabel, closeText, image, imageAlt } = Astro.props;
 ---
 
 <dialog
@@ -32,39 +31,8 @@ const { id, triggerId, title, caption, closeLabel, closeText, image, imageAlt } 
   </div>
 </dialog>
 
-<script define:vars={{ id, triggerId }}>
-  function initLightbox() {
-    const trigger = document.getElementById(triggerId);
-    const lightbox = document.getElementById(id);
-    const closeBtn = lightbox?.querySelector('[data-lightbox-close]');
-    if (!trigger || !lightbox || !closeBtn) return;
-
-    if (trigger.dataset.bound === 'true') return;
-    trigger.dataset.bound = 'true';
-
-    const openDialog = () => {
-      lightbox.showModal();
-      closeBtn.focus();
-    };
-
-    const closeDialog = () => {
-      lightbox.close();
-      trigger.focus();
-    };
-
-    trigger.addEventListener('click', openDialog);
-    closeBtn.addEventListener('click', closeDialog);
-    lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) closeDialog();
-    });
-
-    lightbox.addEventListener('close', () => {
-      if (document.activeElement !== trigger) trigger.focus();
-    });
-  }
-
-  initLightbox();
-  document.addEventListener('astro:page-load', initLightbox);
+<script>
+  import '../scripts/lightbox';
 </script>
 
 <style>

@@ -1,0 +1,22 @@
+---
+import Lightbox from './Lightbox.astro';
+import vulkanTriangle from '../images/vulkan-triangle.png';
+import { useTranslations, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<Lightbox
+  id="engine-lightbox"
+  title={t('engine.title')}
+  caption={t('engine.caption')}
+  closeLabel={t('engine.closeLabel')}
+  closeText={t('lightbox.close')}
+  image={vulkanTriangle}
+  imageAlt={t('engine.imageAlt')}
+/>

@@ -2,7 +2,7 @@
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations, useTranslatedPath, getRawPath } from '../i18n/utils';
-import { getLocale } from '../i18n/config';
+import { LOCALES, getLocale } from '../i18n/config';
 
 interface Props {
   title: string;
@@ -18,12 +18,15 @@ const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
 
-// Alternate language link
 const rawPath = getRawPath(Astro.url, lang);
-const enHref = useTranslatedPath('en')(rawPath);
-const frHref = useTranslatedPath('fr-fr')(rawPath);
+const langLinks = LOCALES.map((l) => ({
+  ...l,
+  href: useTranslatedPath(l.code)(rawPath),
+  active: l.code === lang,
+}));
 
-const htmlLang = getLocale(lang).htmlLang;
+const currentLocale = getLocale(lang);
+const htmlLang = currentLocale.htmlLang;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -80,10 +83,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             aria-expanded="false"
             aria-label="Switch language"
             class="nav-link cursor-pointer"
-          >{lang === 'en' ? 'EN' : 'FR'} ▾</button>
+          >{currentLocale.short} ▾</button>
           <div class="lang-menu" id="lang-menu" hidden role="menu" aria-label="Language selector">
-            <a href={enHref} role="menuitem" lang="en" class:list={['lang-option', { 'lang-option--active': lang === 'en' }]} aria-current={lang === 'en' ? 'page' : undefined}>EN</a>
-            <a href={frHref} role="menuitem" lang="fr" class:list={['lang-option', { 'lang-option--active': lang === 'fr-fr' }]} aria-current={lang === 'fr-fr' ? 'page' : undefined}>FR</a>
+            {langLinks.map((l) => (
+              <a
+                href={l.href}
+                role="menuitem"
+                lang={l.htmlLang}
+                class:list={['lang-option', { 'lang-option--active': l.active }]}
+                aria-current={l.active ? 'page' : undefined}
+              >{l.short}</a>
+            ))}
           </div>
         </div>
         <button
@@ -103,121 +113,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       <p class="mt-1">(｡･∀･)ﾉﾞ</p>
     </footer>
     <script>
-      function initToggle() {
-        const btn = document.getElementById('theme-toggle');
-        if (!btn) return;
-        const isDark = () => document.documentElement.classList.contains('dark');
-        const sync = () => {
-          const dark = isDark();
-          btn.textContent = dark ? '☀' : '☾';
-          btn.setAttribute('aria-pressed', String(dark));
-        };
-        sync();
-        if (btn.dataset.bound === 'true') return;
-        btn.dataset.bound = 'true';
-        btn.addEventListener('click', () => {
-          const dark = document.documentElement.classList.toggle('dark');
-          localStorage.setItem('theme', dark ? 'dark' : 'light');
-          sync();
-        });
-      }
-      initToggle();
-      document.addEventListener('astro:page-load', initToggle);
-    </script>
-    <script>
-      function initLangDropdown() {
-        const toggle = document.getElementById('lang-toggle');
-        const menu = document.getElementById('lang-menu');
-        if (!toggle || !menu) return;
-        if (toggle.dataset.bound === 'true') return;
-        toggle.dataset.bound = 'true';
-        const options = Array.from(menu.querySelectorAll<HTMLAnchorElement>('a'));
-
-        const focusItem = (index: number) => {
-          const item = options[index];
-          if (item) item.focus();
-        };
-
-        const open = () => {
-          menu.hidden = false;
-          toggle.setAttribute('aria-expanded', 'true');
-        };
-
-        const close = () => {
-          menu.hidden = true;
-          toggle.setAttribute('aria-expanded', 'false');
-        };
-
-        toggle.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (menu.hidden) {
-            open();
-            focusItem(0);
-          } else {
-            close();
-          }
-        });
-
-        toggle.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            open();
-            focusItem(0);
-          }
-        });
-
-        menu.addEventListener('keydown', (e) => {
-          const current = document.activeElement as HTMLAnchorElement | null;
-          const index = current ? options.indexOf(current) : -1;
-
-          if (e.key === 'Escape') {
-            e.preventDefault();
-            close();
-            toggle.focus();
-            return;
-          }
-
-          if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            focusItem((index + 1) % options.length);
-          }
-
-          if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            focusItem((index - 1 + options.length) % options.length);
-          }
-
-          if (e.key === 'Home') {
-            e.preventDefault();
-            focusItem(0);
-          }
-
-          if (e.key === 'End') {
-            e.preventDefault();
-            focusItem(options.length - 1);
-          }
-
-          if (e.key === 'Tab') {
-            close();
-          }
-        });
-
-        document.addEventListener('click', (e) => {
-          const target = e.target as Node | null;
-          if (menu.hidden) return;
-          if (toggle.contains(target) || menu.contains(target)) return;
-          close();
-        });
-
-        document.addEventListener('keydown', (e) => {
-          if (e.key !== 'Escape') return;
-          if (menu.hidden) return;
-          close();
-          toggle.focus();
-        });
-      }
-      initLangDropdown();
-      document.addEventListener('astro:page-load', initLangDropdown);
+      import '../scripts/theme';
+      import '../scripts/lang-dropdown';
     </script>
   </body>
 </html>

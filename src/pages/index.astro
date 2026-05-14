@@ -3,12 +3,9 @@ import Layout from '../layouts/Layout.astro';
 import Section from '../components/Section.astro';
 import SocialLinks from '../components/SocialLinks.astro';
 import Works from '../components/Works.astro';
-import Lightbox from '../components/Lightbox.astro';
-import vulkanTriangle from '../images/vulkan-triangle.png';
+import EngineLightbox from '../components/EngineLightbox.astro';
 import { ageFromBirthday, BIRTHDAY } from '../utils/age';
-import { useTranslations } from '../i18n/utils';
 
-const t = useTranslations('en');
 const age = ageFromBirthday(BIRTHDAY);
 const birthdayFormatted = 'September 3, 2008';
 ---
@@ -79,16 +76,7 @@ const birthdayFormatted = 'September 3, 2008';
   </Section>
 </Layout>
 
-<Lightbox
-  id="engine-lightbox"
-  triggerId="engine-trigger"
-  title="Game engine preview"
-  caption="yaay first triangle in vulkan. (March 31st, 2026)"
-  closeLabel="Close preview"
-  closeText={t('lightbox.close')}
-  image={vulkanTriangle}
-  imageAlt="First Vulkan triangle"
-/>
+<EngineLightbox lang="en" />
 
 <script>
   import '../scripts/fade-in';

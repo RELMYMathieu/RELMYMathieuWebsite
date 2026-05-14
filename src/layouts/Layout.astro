@@ -2,6 +2,7 @@
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations, useTranslatedPath, getRawPath } from '../i18n/utils';
+import { getLocale } from '../i18n/config';
 
 interface Props {
   title: string;
@@ -22,7 +23,7 @@ const rawPath = getRawPath(Astro.url, lang);
 const enHref = useTranslatedPath('en')(rawPath);
 const frHref = useTranslatedPath('fr-fr')(rawPath);
 
-const htmlLang = lang === 'fr-fr' ? 'fr-FR' : lang;
+const htmlLang = getLocale(lang).htmlLang;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 

@@ -8,11 +8,12 @@ interface Props {
   title: string;
   caption: string;
   closeLabel: string;
+  closeText: string;
   image: ImageMetadata;
   imageAlt: string;
 }
 
-const { id, triggerId, title, caption, closeLabel, image, imageAlt } = Astro.props;
+const { id, triggerId, title, caption, closeLabel, closeText, image, imageAlt } = Astro.props;
 ---
 
 <dialog
@@ -24,7 +25,7 @@ const { id, triggerId, title, caption, closeLabel, image, imageAlt } = Astro.pro
   <div class="lightbox-inner">
     <div class="lightbox-controls">
       <h2 id={`${id}-title`} class="lightbox-title">{title}</h2>
-      <button class="lightbox-close" type="button" aria-label={closeLabel} data-lightbox-close>Close</button>
+      <button class="lightbox-close" type="button" aria-label={closeLabel} data-lightbox-close>{closeText}</button>
     </div>
     <Image src={image} alt={imageAlt} class="lightbox-img" />
     <p id={`${id}-caption`} class="lightbox-caption">{caption}</p>

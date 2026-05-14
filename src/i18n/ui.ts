@@ -1,11 +1,12 @@
-export const languages = {
-  en: 'English',
-  'fr-fr': 'Français',
-} as const;
+import { LOCALES, DEFAULT_LOCALE, SHOW_DEFAULT_PREFIX, type Lang } from './config';
 
-export type Lang = keyof typeof languages;
-export const defaultLang: Lang = 'en';
-export const showDefaultLang = false;
+export type { Lang };
+export const defaultLang = DEFAULT_LOCALE;
+export const showDefaultLang = SHOW_DEFAULT_PREFIX;
+
+export const languages = Object.fromEntries(
+  LOCALES.map((l) => [l.code, l.label]),
+) as Record<Lang, string>;
 
 export const ui = {
   en: {
@@ -21,6 +22,7 @@ export const ui = {
     'works.close': 'Close {name} window',
     'works.placeholder': '[ you are here! ]',
     'works.mobile-hint': 'psst — try this on a bigger screen for the full experience',
+    'lightbox.close': 'Close',
   },
   'fr-fr': {
     'nav.home': '~/accueil',
@@ -35,5 +37,6 @@ export const ui = {
     'works.close': 'Fermer la fenêtre {name}',
     'works.placeholder': '[ vous êtes ici! ]',
     'works.mobile-hint': 'psst — essayez sur un plus grand écran pour une meilleure expérience',
+    'lightbox.close': 'Fermer',
   },
 } as const;

@@ -1,14 +1,25 @@
 import { makeDraggable } from './draggable';
+import { morph, onPageReady, EASE } from '../animations';
 
 type WindowState = 'normal' | 'fullscreen' | 'minimized';
-type FlipMode = 'standard' | 'fullscreen' | 'minimize' | 'restore';
+
+interface WinEntry {
+  el: HTMLElement;
+  trigger: HTMLButtonElement;
+  backdrop: HTMLElement;
+  state: WindowState;
+}
 
 const DESKTOP_OPEN_TOP = '20vh';
-const EASE_OUT_QUART = 'cubic-bezier(0.25, 1, 0.5, 1)';
-const EASE_OUT_EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const Z_BASE = 100;
+const STAGGER = 24;
 
 const isMobile = () => window.matchMedia('(max-width: 560px)').matches;
-const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const windows = new Map<HTMLElement, WinEntry>();
+let focused: HTMLElement | null = null;
+let nextZ = Z_BASE;
+let documentListenersBound = false;
 
 function getFocusable(el: HTMLElement): HTMLElement[] {
   return Array.from(
@@ -19,6 +30,7 @@ function getFocusable(el: HTMLElement): HTMLElement[] {
 }
 
 function lockScroll() {
+  if (document.body.style.overflow === 'hidden') return;
   const gap = window.innerWidth - document.documentElement.clientWidth;
   if (gap > 0) document.body.style.paddingRight = gap + 'px';
   document.body.style.overflow = 'hidden';
@@ -29,214 +41,186 @@ function unlockScroll() {
   document.body.style.paddingRight = '';
 }
 
-function freezeLayout(el: HTMLElement) {
-  el.getAnimations().forEach((a) => a.cancel());
-  el.style.transition = 'none';
-  el.offsetHeight;
+function anyVisible(): boolean {
+  for (const e of windows.values()) if (e.state !== 'minimized') return true;
+  return false;
 }
 
-function unfreezeLayout(el: HTMLElement) {
-  el.style.transition = '';
+function syncBackdrop(backdrop: HTMLElement) {
+  const visible = anyVisible();
+  backdrop.classList.toggle('is-open', visible);
+  visible ? lockScroll() : unlockScroll();
 }
 
-function flipAnimate(win: HTMLElement, from: DOMRect, mode: FlipMode = 'standard') {
-  if (prefersReducedMotion()) return;
+function syncIcon(win: HTMLElement, state: WindowState) {
+  const btn = win.querySelector<HTMLButtonElement>('[data-action="fullscreen"]');
+  if (btn) btn.textContent = state === 'fullscreen' ? '[▪]' : '[□]';
+}
 
-  freezeLayout(win);
+function focus(win: HTMLElement) {
+  focused = win;
+  nextZ += 1;
+  win.style.zIndex = String(nextZ);
+}
+
+function topmostVisible(): HTMLElement | null {
+  let best: HTMLElement | null = null;
+  let bestZ = -Infinity;
+  for (const [el, entry] of windows) {
+    if (entry.state === 'minimized') continue;
+    const z = parseInt(el.style.zIndex || '0', 10);
+    if (z > bestZ) { bestZ = z; best = el; }
+  }
+  return best;
+}
+
+function reflowMinimized() {
+  const slotW = Math.min(320, window.innerWidth - 32) + 8;
+  let i = 0;
+  for (const [el, entry] of windows) {
+    if (entry.state !== 'minimized') continue;
+    el.style.setProperty('--ww-min-x', `calc(1rem + ${i * slotW}px)`);
+    i++;
+  }
+}
+
+function clearMorphStyles(el: HTMLElement, ...children: HTMLElement[]) {
+  el.style.transform = '';
+  el.style.transformOrigin = '';
+  for (const child of children) {
+    child.style.transform = '';
+    child.style.transformOrigin = '';
+  }
+}
+
+function applyState(win: HTMLElement, next: WindowState) {
+  const entry = windows.get(win);
+  if (!entry) return;
+
+  win.classList.remove('is-opening');
+  const titlebar = win.querySelector<HTMLElement>('.ww-titlebar')!;
+  const from = win.getBoundingClientRect();
+
+  win.classList.remove('is-fullscreen', 'is-minimized');
+  entry.state = next;
+  if (next === 'fullscreen') win.classList.add('is-fullscreen');
+  if (next === 'minimized') win.classList.add('is-minimized');
+
+  reflowMinimized();
+  syncBackdrop(entry.backdrop);
+  syncIcon(win, next);
+  if (next !== 'minimized') focus(win);
+  else if (focused === win) focused = topmostVisible();
+
   const to = win.getBoundingClientRect();
+  const ease = (next === 'minimized' ? EASE.snappy : EASE.bouncy) as unknown as number[];
+  const duration = next === 'minimized' ? 0.28 : 0.36;
 
-  if (!from.width || !to.width) {
-    unfreezeLayout(win);
+  const result = morph(win, from, to, { duration, ease, counterScale: [titlebar] });
+  if (!result) return;
+  Promise.all([result.parent, ...result.counterAnims]).finally(() => {
+    clearMorphStyles(win, titlebar);
+  });
+}
+
+function close(win: HTMLElement) {
+  const entry = windows.get(win);
+  if (!entry) return;
+
+  win.classList.remove('is-open');
+  win.setAttribute('aria-hidden', 'true');
+  entry.trigger.focus({ preventScroll: true });
+
+  setTimeout(() => {
+    win.classList.remove('is-fullscreen', 'is-minimized');
+    win.style.left = '';
+    win.style.top = '';
+    win.style.translate = '';
+    win.style.transform = '';
+    win.style.zIndex = '';
+    win.style.removeProperty('--ww-min-x');
+  }, 220);
+
+  windows.delete(win);
+  if (focused === win) focused = topmostVisible();
+  reflowMinimized();
+  syncBackdrop(entry.backdrop);
+}
+
+function handleAction(win: HTMLElement, action: string) {
+  if (action === 'close') return close(win);
+  const entry = windows.get(win);
+  if (!entry) return;
+  if (action === 'minimize') return applyState(win, entry.state === 'minimized' ? 'normal' : 'minimized');
+  if (action === 'fullscreen') return applyState(win, entry.state === 'fullscreen' ? 'normal' : 'fullscreen');
+}
+
+function visibleCount(): number {
+  let n = 0;
+  for (const e of windows.values()) if (e.state !== 'minimized') n++;
+  return n;
+}
+
+function open(win: HTMLElement, trigger: HTMLButtonElement, backdrop: HTMLElement) {
+  const existing = windows.get(win);
+  if (existing) {
+    if (existing.state === 'minimized') applyState(win, 'normal');
+    else focus(win);
     return;
   }
 
-  const dx = from.left - to.left;
-  const dy = from.top - to.top;
-  const sx = from.width / to.width;
-  const sy = from.height / to.height;
+  if (!isMobile()) {
+    const offset = visibleCount() * STAGGER;
+    win.style.transition = 'none';
+    win.style.left = `calc(50% + ${offset}px)`;
+    win.style.top = `calc(${DESKTOP_OPEN_TOP} + ${offset}px)`;
+    win.style.translate = '-50% 0';
+    win.style.transform = '';
+    win.offsetHeight;
+    win.style.transition = '';
+  }
 
-  const origin = 'top left';
-  const duration =
-    mode === 'fullscreen' ? 480 : mode === 'minimize' ? 340 : mode === 'restore' ? 360 : 350;
-  const easing = mode === 'minimize' ? EASE_OUT_QUART : EASE_OUT_EXPO;
+  windows.set(win, { el: win, trigger, backdrop, state: 'normal' });
+  win.classList.remove('is-fullscreen', 'is-minimized');
+  win.classList.add('is-open');
+  win.setAttribute('aria-hidden', 'false');
+  syncBackdrop(backdrop);
+  syncIcon(win, 'normal');
+  focus(win);
 
-  const keyframes: Keyframe[] = [
-    {
-      transformOrigin: origin,
-      transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-      ...(mode === 'fullscreen' && { boxShadow: '4px 4px 0 rgba(0, 0, 0, 0.15)' }),
-    },
-    {
-      transformOrigin: origin,
-      transform: 'none',
-      ...(mode === 'fullscreen' && { boxShadow: 'none' }),
-    },
-  ];
+  if (!isMobile()) {
+    win.classList.remove('is-opening');
+    win.offsetHeight;
+    win.classList.add('is-opening');
+    window.setTimeout(() => win.classList.remove('is-opening'), 520);
+  }
 
-  win.style.willChange = 'transform';
-  const animation = win.animate(keyframes, { duration, easing });
-  const cleanup = () => {
-    win.style.willChange = '';
-    unfreezeLayout(win);
-  };
-
-  animation.addEventListener('finish', cleanup, { once: true });
-  animation.addEventListener('cancel', cleanup, { once: true });
+  const focusable = getFocusable(win);
+  (focusable[0] ?? win).focus();
 }
 
-export function initWorkWindows(): void {
-  const triggers = document.querySelectorAll<HTMLButtonElement>('button[data-work]');
-  if (!triggers.length) return;
-
-  if ((window as any).__wwBound) return;
-  (window as any).__wwBound = true;
-
-  const backdrop = document.getElementById('ww-backdrop')!;
-  let activeWindow: HTMLElement | null = null;
-  let activeTrigger: HTMLButtonElement | null = null;
-  let state: WindowState = 'normal';
-
-  function clearState(win: HTMLElement) {
-    win.classList.remove('is-fullscreen', 'is-minimized');
-  }
-
-  function syncIcon(win: HTMLElement) {
-    const btn = win.querySelector<HTMLButtonElement>('[data-action="fullscreen"]');
-    if (btn) btn.textContent = state === 'fullscreen' ? '[▪]' : '[□]';
-  }
-
-  function applyState(next: WindowState) {
-    if (!activeWindow) return;
-
-    activeWindow.classList.remove('is-opening');
-
-    const previousState = state;
-    const first = activeWindow.getBoundingClientRect();
-    const mode: FlipMode =
-      next === 'fullscreen'
-        ? 'fullscreen'
-        : next === 'minimized'
-          ? 'minimize'
-          : previousState === 'minimized'
-            ? 'restore'
-            : 'standard';
-
-    clearState(activeWindow);
-    state = next;
-
-    if (next === 'fullscreen') activeWindow.classList.add('is-fullscreen');
-    if (next === 'minimized') activeWindow.classList.add('is-minimized');
-
-    const showBackdrop = next !== 'minimized';
-    backdrop.classList.toggle('is-open', showBackdrop);
-    showBackdrop ? lockScroll() : unlockScroll();
-    syncIcon(activeWindow);
-
-    flipAnimate(activeWindow, first, mode);
-  }
-
-  function close() {
-    if (!activeWindow || !activeTrigger) return;
-    const win = activeWindow;
-
-    win.classList.remove('is-open');
-    win.setAttribute('aria-hidden', 'true');
-    backdrop.classList.remove('is-open');
-    unlockScroll();
-    activeTrigger.focus({ preventScroll: true });
-
-    setTimeout(() => {
-      win.classList.remove('is-fullscreen', 'is-minimized');
-      win.style.left = '';
-      win.style.top = '';
-      win.style.translate = '';
-      win.style.transform = '';
-    }, 220);
-
-    state = 'normal';
-    activeWindow = null;
-    activeTrigger = null;
-  }
-
-  function handleAction(action: string) {
-    if (action === 'close') return close();
-    if (action === 'minimize') return applyState(state === 'minimized' ? 'normal' : 'minimized');
-    if (action === 'fullscreen') return applyState(state === 'fullscreen' ? 'normal' : 'fullscreen');
-  }
-
-  function open(win: HTMLElement, trigger: HTMLButtonElement) {
-    if (activeWindow && activeWindow !== win) close();
-
-    if (!isMobile()) {
-      win.style.transition = 'none';
-      win.style.left = '50%';
-      win.style.top = DESKTOP_OPEN_TOP;
-      win.style.translate = '-50% 0';
-      win.style.transform = '';
-      win.offsetHeight;
-      win.style.transition = '';
-    }
-
-    activeWindow = win;
-    activeTrigger = trigger;
-    state = 'normal';
-    clearState(win);
-    win.classList.add('is-open');
-    win.setAttribute('aria-hidden', 'false');
-    backdrop.classList.add('is-open');
-    lockScroll();
-    syncIcon(win);
-
-    if (!isMobile() && !prefersReducedMotion()) {
-      win.classList.remove('is-opening');
-      win.offsetHeight;
-      win.classList.add('is-opening');
-      window.setTimeout(() => win.classList.remove('is-opening'), 520);
-    }
-
-    const focusable = getFocusable(win);
-    (focusable[0] ?? win).focus();
-  }
-
-  triggers.forEach((trigger) => {
-    const workId = trigger.dataset.work!;
-    const win = document.getElementById(`ww-${workId}`);
-    if (!win) return;
-
-    const handle = win.querySelector<HTMLElement>('[data-drag-handle]')!;
-    makeDraggable(win, handle, () => !isMobile() && state === 'normal');
-
-    trigger.addEventListener('click', () => open(win, trigger));
-
-    win.addEventListener('click', (e) => {
-      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
-      if (btn) handleAction(btn.dataset.action!);
-    });
-
-    handle.addEventListener('click', (e) => {
-      if (state !== 'minimized') return;
-      if ((e.target as HTMLElement).closest('[data-action]')) return;
-      applyState('normal');
-    });
-  });
-
-  backdrop.addEventListener('click', close);
+function bindDocumentListeners() {
+  if (documentListenersBound) return;
+  documentListenersBound = true;
 
   document.addEventListener('keydown', (e) => {
-    if (!activeWindow) return;
+    if (!focused) return;
+    const entry = windows.get(focused);
+    if (!entry) return;
 
     if (e.key === 'Escape') {
       e.preventDefault();
-      state === 'fullscreen' ? applyState('normal') : close();
+      if (entry.state === 'fullscreen') applyState(focused, 'normal');
+      else close(focused);
       return;
     }
 
-    if (state === 'minimized' || e.key !== 'Tab') return;
+    if (entry.state === 'minimized' || e.key !== 'Tab') return;
 
-    const focusable = getFocusable(activeWindow);
+    const focusable = getFocusable(focused);
     if (!focusable.length) {
       e.preventDefault();
-      activeWindow.focus();
+      focused.focus();
       return;
     }
 
@@ -251,4 +235,56 @@ export function initWorkWindows(): void {
       first.focus();
     }
   });
+
+  window.addEventListener('resize', reflowMinimized);
 }
+
+export function initWorkWindows(): void {
+  const triggers = document.querySelectorAll<HTMLButtonElement>('button[data-work]');
+  if (!triggers.length) return;
+
+  const backdrop = document.getElementById('ww-backdrop');
+  if (!backdrop) return;
+
+  if (backdrop.dataset.wwBound !== '1') {
+    backdrop.dataset.wwBound = '1';
+    backdrop.addEventListener('click', () => {
+      if (focused) close(focused);
+    });
+  }
+
+  triggers.forEach((trigger) => {
+    if (trigger.dataset.wwBound === '1') return;
+    trigger.dataset.wwBound = '1';
+
+    const workId = trigger.dataset.work!;
+    const win = document.getElementById(`ww-${workId}`);
+    if (!win) return;
+
+    const handle = win.querySelector<HTMLElement>('[data-drag-handle]')!;
+    makeDraggable(win, handle, () => !isMobile() && windows.get(win)?.state === 'normal');
+
+    trigger.addEventListener('click', () => open(win, trigger, backdrop));
+
+    win.addEventListener('mousedown', () => {
+      const entry = windows.get(win);
+      if (entry && entry.state !== 'minimized') focus(win);
+    });
+
+    win.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
+      if (btn) handleAction(win, btn.dataset.action!);
+    });
+
+    handle.addEventListener('click', (e) => {
+      const entry = windows.get(win);
+      if (!entry || entry.state !== 'minimized') return;
+      if ((e.target as HTMLElement).closest('[data-action]')) return;
+      applyState(win, 'normal');
+    });
+  });
+
+  bindDocumentListeners();
+}
+
+onPageReady(initWorkWindows);

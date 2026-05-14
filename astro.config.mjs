@@ -9,7 +9,10 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   site: 'https://relmymathieu.me',
   integrations: [sitemap(), mdx()],
-    vite: {
+  image: {
+    domains: ['raw.githubusercontent.com'],
+  },
+  vite: {
     plugins: [tailwindcss()],
-  }
+  },
 });

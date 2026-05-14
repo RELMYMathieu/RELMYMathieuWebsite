@@ -51,24 +51,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="twitter:description" content={description} />
 
     <ClientRouter />
-    <script is:inline>
-      (function () {
-        const storedTheme = localStorage.getItem('theme');
-        const dark = storedTheme
-          ? storedTheme === 'dark'
-          : window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.classList.toggle('dark', dark);
-      })();
-
-      document.addEventListener('astro:before-swap', (e) => {
-        e.newDocument.documentElement.classList.toggle(
-          'dark',
-          document.documentElement.classList.contains('dark')
-        );
-      });
-    </script>
   </head>
-  <body class="min-h-screen bg-white dark:bg-zinc-900 text-black dark:text-zinc-100 font-mono theme-transition">
+  <body class="min-h-screen bg-zinc-900 text-zinc-100 font-mono">
     <a href="#main-content" class="skip-link">Skip to content</a>
     <nav class="nav-bar">
       <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
@@ -96,13 +80,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             ))}
           </div>
         </div>
-        <button
-          id="theme-toggle"
-          type="button"
-          aria-label="Toggle theme"
-          aria-pressed="false"
-          class="cursor-pointer size-11 inline-flex items-center justify-center rounded"
-        ></button>
       </div>
     </nav>
     <main id="main-content" class="max-w-2xl mx-auto px-6 py-10">
@@ -113,7 +90,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       <p class="mt-1">(｡･∀･)ﾉﾞ</p>
     </footer>
     <script>
-      import '../scripts/theme';
       import '../scripts/lang-dropdown';
     </script>
   </body>
@@ -125,7 +101,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     top: -100%;
     left: 0;
     background: var(--text-main);
-    color: var(--white, #ffffff);
+    color: var(--surface-bg);
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
     text-decoration: none;
@@ -137,10 +113,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     top: 0;
     outline: 2px dashed currentColor;
     outline-offset: 2px;
-  }
-
-  .theme-transition {
-    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
   }
 
   .nav-bar {
@@ -198,11 +170,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
   .lang-option--active {
     font-weight: 700;
-  }
-
-  #theme-toggle:focus-visible {
-    outline: 2px dashed currentColor;
-    outline-offset: 3px;
   }
 
   .footer-bar {

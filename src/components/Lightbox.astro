@@ -26,7 +26,7 @@ const { id, title, caption, closeLabel, closeText, image, imageAlt } = Astro.pro
       <h2 id={`${id}-title`} class="lightbox-title">{title}</h2>
       <button class="lightbox-close" type="button" aria-label={closeLabel} data-lightbox-close>{closeText}</button>
     </div>
-    <Image src={image} alt={imageAlt} class="lightbox-img" />
+    <Image src={image} alt={imageAlt} class="lightbox-img" loading="lazy" decoding="async" />
     <p id={`${id}-caption`} class="lightbox-caption">{caption}</p>
   </div>
 </dialog>

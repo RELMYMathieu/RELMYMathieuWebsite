@@ -15,8 +15,6 @@ export type Lang = typeof LOCALES[number]['code'];
 export const DEFAULT_LOCALE: Lang = 'en';
 export const SHOW_DEFAULT_PREFIX = false;
 
-export const LOCALE_CODES = LOCALES.map((l) => l.code) as readonly Lang[];
-
 const LOCALE_BY_CODE = new Map(LOCALES.map((l) => [l.code, l]));
 
 export function getLocale(code: Lang): LocaleDef {

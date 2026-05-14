@@ -1,65 +1,19 @@
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  color-scheme: light;
-
-  /* base palette - gray scale */
-  --gray-50: #f9fafb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-900: #111827;
-
-  /* base palette - core */
-  --white: #ffffff;
-
-  /* base palette - green (terminal accent) */
-  --green-600: #16a34a;
-
-  /* surface & text */
-  --text-main: var(--gray-900);
-  --text-muted: var(--gray-600);
-  --text-subtle: var(--gray-500);
-  --surface-bg: #fafafa;
-  --surface-hover: rgba(0, 0, 0, 0.02);
-  --border: var(--gray-300);
-  --border-hover: var(--gray-400);
-  --menu-bg: var(--white);
-
-  /* tooltip / hint */
-  --hint-border: var(--gray-500);
-  --hint-bg: var(--gray-900);
-  --hint-fg: var(--gray-50);
-
-  /* lightbox */
-  --lightbox-img-border: var(--gray-600);
-  --lightbox-caption: var(--gray-300);
-
-  /* work window */
-  --ww-bg: var(--surface-bg);
-  --ww-fg: var(--gray-900);
-  --ww-muted: var(--gray-600);
-  --ww-prompt: var(--green-600);
-}
-
-.dark {
   color-scheme: dark;
 
-  /* base palette - zinc scale (dark mode) */
-  --zinc-50: #fafafa;
+  --gray-400: #9ca3af;
+
   --zinc-100: #f4f4f5;
   --zinc-200: #e4e4e7;
   --zinc-400: #a1a1aa;
   --zinc-500: #71717a;
   --zinc-600: #52525b;
   --zinc-700: #3f3f46;
-  --zinc-800: #27272a;
   --zinc-900: #18181b;
   --zinc-950: #0a0a0a;
 
-  /* base palette - green (terminal accent) */
   --green-400: #4ade80;
 
   --text-main: var(--zinc-100);

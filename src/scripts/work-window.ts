@@ -19,6 +19,7 @@ const isMobile = () => window.matchMedia('(max-width: 560px)').matches;
 const windows = new Map<HTMLElement, WinEntry>();
 let focused: HTMLElement | null = null;
 let nextZ = Z_BASE;
+let activeBackdrop: HTMLElement | null = null;
 let documentListenersBound = false;
 
 function getFocusable(el: HTMLElement): HTMLElement[] {
@@ -41,15 +42,12 @@ function unlockScroll() {
   document.body.style.paddingRight = '';
 }
 
-function anyVisible(): boolean {
-  for (const e of windows.values()) if (e.state !== 'minimized') return true;
-  return false;
-}
-
-function syncBackdrop(backdrop: HTMLElement) {
-  const visible = anyVisible();
-  backdrop.classList.toggle('is-open', visible);
-  visible ? lockScroll() : unlockScroll();
+function syncFocusChrome() {
+  if (!activeBackdrop) return;
+  const lit = focused !== null;
+  activeBackdrop.classList.toggle('is-open', lit);
+  lit ? lockScroll() : unlockScroll();
+  for (const [el] of windows) el.classList.toggle('is-focused', el === focused);
 }
 
 function syncIcon(win: HTMLElement, state: WindowState) {
@@ -58,9 +56,17 @@ function syncIcon(win: HTMLElement, state: WindowState) {
 }
 
 function focus(win: HTMLElement) {
+  if (focused === win) return;
   focused = win;
   nextZ += 1;
   win.style.zIndex = String(nextZ);
+  syncFocusChrome();
+}
+
+function unfocus() {
+  if (!focused) return;
+  focused = null;
+  syncFocusChrome();
 }
 
 function topmostVisible(): HTMLElement | null {
@@ -107,10 +113,13 @@ function applyState(win: HTMLElement, next: WindowState) {
   if (next === 'minimized') win.classList.add('is-minimized');
 
   reflowMinimized();
-  syncBackdrop(entry.backdrop);
   syncIcon(win, next);
-  if (next !== 'minimized') focus(win);
-  else if (focused === win) focused = topmostVisible();
+  if (next !== 'minimized') {
+    focus(win);
+  } else {
+    if (focused === win) focused = topmostVisible();
+    syncFocusChrome();
+  }
 
   const to = win.getBoundingClientRect();
   const ease = (next === 'minimized' ? EASE.snappy : EASE.bouncy) as unknown as number[];
@@ -144,7 +153,7 @@ function close(win: HTMLElement) {
   windows.delete(win);
   if (focused === win) focused = topmostVisible();
   reflowMinimized();
-  syncBackdrop(entry.backdrop);
+  syncFocusChrome();
 }
 
 function handleAction(win: HTMLElement, action: string) {
@@ -184,7 +193,6 @@ function open(win: HTMLElement, trigger: HTMLButtonElement, backdrop: HTMLElemen
   win.classList.remove('is-fullscreen', 'is-minimized');
   win.classList.add('is-open');
   win.setAttribute('aria-hidden', 'false');
-  syncBackdrop(backdrop);
   syncIcon(win, 'normal');
   focus(win);
 
@@ -245,12 +253,11 @@ export function initWorkWindows(): void {
 
   const backdrop = document.getElementById('ww-backdrop');
   if (!backdrop) return;
+  activeBackdrop = backdrop;
 
   if (backdrop.dataset.wwBound !== '1') {
     backdrop.dataset.wwBound = '1';
-    backdrop.addEventListener('click', () => {
-      if (focused) close(focused);
-    });
+    backdrop.addEventListener('click', unfocus);
   }
 
   triggers.forEach((trigger) => {

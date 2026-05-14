@@ -1,7 +1,14 @@
 @import "tailwindcss";
 
+@theme {
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
 :root {
   color-scheme: dark;
+
+  --radius: 4px;
+  --radius-lg: 8px;
 
   --gray-400: #9ca3af;
 
@@ -36,6 +43,14 @@
   --ww-fg: var(--zinc-100);
   --ww-muted: var(--zinc-400);
   --ww-prompt: var(--green-400);
+}
+
+.prompt-line {
+  font-size: 0.75rem;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.25rem;
+  opacity: 0.55;
 }
 
 .text-main {

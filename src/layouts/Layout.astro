@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions';
+import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations, useTranslatedPath, getRawPath } from '../i18n/utils';
 import { LOCALES, getLocale } from '../i18n/config';
@@ -11,7 +12,7 @@ interface Props {
 
 const {
   title,
-  description = "Relmy Mathieu's personal site — aspiring nuclear engineer, dev, nerd.",
+  description = "Relmy Mathieu's personal site, aspiring nuclear engineer, dev, nerd.",
 } = Astro.props;
 
 const lang = getLangFromUrl(Astro.url);
@@ -43,21 +44,22 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
-    <meta property="og:title" content={`${title} — Relmy Mathieu`} />
+    <meta property="og:title" content={`${title} - Relmy Mathieu`} />
     <meta property="og:description" content={description} />
 
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content={`${title} — Relmy Mathieu`} />
+    <meta name="twitter:title" content={`${title} - Relmy Mathieu`} />
     <meta name="twitter:description" content={description} />
 
     <ClientRouter />
   </head>
-  <body class="min-h-screen bg-zinc-900 text-zinc-100 font-mono">
+  <body class="min-h-screen flex flex-col bg-zinc-900 text-zinc-100 font-mono">
     <a href="#main-content" class="skip-link">Skip to content</a>
     <nav class="nav-bar">
       <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
       <a href={translatePath('/blog')} class="nav-link">{t('nav.blog')}</a>
-      <div class="ml-auto flex items-center">
+      <div class="ml-auto flex items-center gap-2">
+        <span class="nav-clock" id="status-clock" aria-label="Time in Paris">[Paris --:--]</span>
         <div class="lang-dropdown" id="lang-dropdown">
           <button
             id="lang-toggle"
@@ -67,8 +69,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             aria-expanded="false"
             aria-label="Switch language"
             class="nav-link cursor-pointer"
-          >{currentLocale.short} ▾</button>
-          <div class="lang-menu" id="lang-menu" hidden role="menu" aria-label="Language selector">
+          >[{currentLocale.short} ▾]</button>
+          <div class="lang-menu" id="lang-menu" role="menu" aria-label="Language selector" aria-hidden="true">
             {langLinks.map((l) => (
               <a
                 href={l.href}
@@ -82,15 +84,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         </div>
       </div>
     </nav>
-    <main id="main-content" class="max-w-2xl mx-auto px-6 py-10">
+    <main id="main-content" class="flex-1 w-full max-w-2xl mx-auto px-6 py-10">
       <slot />
     </main>
-    <footer class="footer-bar text-subtle px-6 py-3 text-xs text-center mt-10">
-      <p>{t('footer.credit')}</p>
-      <p class="mt-1">(｡･∀･)ﾉﾞ</p>
+    <footer class="status-bar">
+      <span class="status-seg status-seg--muted">{t('footer.credit')}</span>
+      <span class="status-seg status-seg--muted" aria-hidden="true">(｡･∀･)ﾉﾞ</span>
     </footer>
     <script>
       import '../scripts/lang-dropdown';
+      import '../scripts/clock';
     </script>
   </body>
 </html>
@@ -143,13 +146,35 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   .lang-menu {
     position: absolute;
     right: 0;
-    top: calc(100% + 2px);
+    top: calc(100% + 4px);
     background: var(--menu-bg);
     border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
     min-width: 4rem;
     z-index: 50;
     display: flex;
     flex-direction: column;
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+    transform-origin: top right;
+    pointer-events: none;
+    visibility: hidden;
+    transition:
+      opacity 0.16s ease,
+      transform 0.18s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      visibility 0s linear 0.18s;
+  }
+
+  .lang-menu.is-open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    visibility: visible;
+    transition:
+      opacity 0.16s ease,
+      transform 0.18s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      visibility 0s linear 0s;
   }
 
   .lang-option {
@@ -172,7 +197,40 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     font-weight: 700;
   }
 
-  .footer-bar {
+  .status-bar {
     border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.55rem 1rem;
+    margin-top: 2.5rem;
+    font-size: 0.7rem;
+    color: var(--text-subtle);
+    letter-spacing: 0.02em;
+  }
+
+  .status-seg {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .status-seg--muted {
+    color: var(--text-subtle);
+    opacity: 0.85;
+  }
+
+  .nav-clock {
+    font-size: 0.75rem;
+    color: var(--text-subtle);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    padding: 0 0.35rem;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 480px) {
+    .nav-clock { display: none; }
   }
 </style>

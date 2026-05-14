@@ -127,12 +127,13 @@ const works = await Promise.all(
   }
 
   .work-item {
+    position: relative;
     width: 100%;
     display: grid;
     grid-template-columns: 1fr auto auto;
     align-items: baseline;
     gap: 0.75rem;
-    padding: 0.625rem 0;
+    padding: 0.625rem 0.5rem;
     min-height: 2.75rem;
     background: none;
     border: none;
@@ -141,10 +142,30 @@ const works = await Promise.all(
     cursor: pointer;
     text-align: left;
     border-bottom: 1px dashed var(--border);
-    transition: border-color 0.15s;
+    border-radius: var(--radius);
+    transition: border-color 0.18s ease;
+    isolation: isolate;
   }
 
-  .work-item:hover { border-color: var(--border-hover); }
+  .work-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.04), transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .work-item:hover {
+    border-color: var(--border-hover);
+  }
+
+  .work-item:hover::before {
+    opacity: 1;
+  }
   .work-item:hover .work-item__open { opacity: 1; }
 
   .work-item:focus-visible {
@@ -192,16 +213,20 @@ const works = await Promise.all(
     inset: 0;
     z-index: 99;
     background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
     visibility: hidden;
     pointer-events: none;
-    transition: background 0.22s ease, visibility 0s linear 0.22s;
+    transition: background 0.22s ease, backdrop-filter 0.22s ease, -webkit-backdrop-filter 0.22s ease, visibility 0s linear 0.22s;
   }
 
   .ww-backdrop.is-open {
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(4px) saturate(130%);
+    -webkit-backdrop-filter: blur(4px) saturate(130%);
     visibility: visible;
     pointer-events: auto;
-    transition: background 0.22s ease, visibility 0s linear 0s;
+    transition: background 0.22s ease, backdrop-filter 0.22s ease, -webkit-backdrop-filter 0.22s ease, visibility 0s linear 0s;
   }
 
   /* ── Work window ── */
@@ -222,6 +247,7 @@ const works = await Promise.all(
     background: var(--ww-bg);
     color: var(--ww-fg);
     border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
     font-size: 0.8125rem;
     box-shadow: 4px 4px 0 var(--border);
     user-select: none;
@@ -258,6 +284,7 @@ const works = await Promise.all(
     translate: 0 0 !important;
     width: 100% !important;
     height: 100dvh;
+    border-radius: 0;
     box-shadow: none;
   }
 

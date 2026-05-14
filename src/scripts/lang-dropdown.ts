@@ -5,6 +5,10 @@ let currentMenu: HTMLElement | null = null;
 let currentOptions: HTMLAnchorElement[] = [];
 let documentBound = false;
 
+function isOpen(): boolean {
+  return currentMenu?.classList.contains('is-open') ?? false;
+}
+
 function focusItem(index: number) {
   const item = currentOptions[index];
   if (item) item.focus();
@@ -12,13 +16,15 @@ function focusItem(index: number) {
 
 function openMenu() {
   if (!currentToggle || !currentMenu) return;
-  currentMenu.hidden = false;
+  currentMenu.classList.add('is-open');
+  currentMenu.setAttribute('aria-hidden', 'false');
   currentToggle.setAttribute('aria-expanded', 'true');
 }
 
 function closeMenu() {
   if (!currentToggle || !currentMenu) return;
-  currentMenu.hidden = true;
+  currentMenu.classList.remove('is-open');
+  currentMenu.setAttribute('aria-hidden', 'true');
   currentToggle.setAttribute('aria-expanded', 'false');
 }
 
@@ -27,14 +33,14 @@ function bindDocumentListenersOnce() {
   documentBound = true;
 
   document.addEventListener('click', (e) => {
-    if (!currentMenu || !currentToggle || currentMenu.hidden) return;
+    if (!currentMenu || !currentToggle || !isOpen()) return;
     const target = e.target as Node | null;
     if (currentToggle.contains(target) || currentMenu.contains(target)) return;
     closeMenu();
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || !currentMenu || currentMenu.hidden) return;
+    if (e.key !== 'Escape' || !isOpen()) return;
     closeMenu();
     currentToggle?.focus();
   });
@@ -56,11 +62,11 @@ function initLangDropdown(): void {
 
   toggle.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (menu.hidden) {
+    if (isOpen()) {
+      closeMenu();
+    } else {
       openMenu();
       focusItem(0);
-    } else {
-      closeMenu();
     }
   });
 

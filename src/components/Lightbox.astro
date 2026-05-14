@@ -106,6 +106,7 @@ const { id, title, caption, closeLabel, closeText, image, imageAlt } = Astro.pro
 
   .lightbox-close {
     border: 1px solid currentColor;
+    border-radius: var(--radius);
     background: transparent;
     color: var(--lightbox-caption);
     font: inherit;
@@ -126,6 +127,7 @@ const { id, title, caption, closeLabel, closeText, image, imageAlt } = Astro.pro
     max-height: 75vh;
     object-fit: contain;
     border: 1px solid var(--lightbox-img-border);
+    border-radius: var(--radius);
   }
 
   .lightbox-caption {

@@ -78,13 +78,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
                 lang={l.htmlLang}
                 class:list={['lang-option', { 'lang-option--active': l.active }]}
                 aria-current={l.active ? 'page' : undefined}
+                aria-label={`Switch to ${l.label}`}
               >{l.short}</a>
             ))}
           </div>
         </div>
       </div>
     </nav>
-    <main id="main-content" class="flex-1 w-full max-w-2xl mx-auto px-6 py-10">
+    <main id="main-content" class="flex-1 w-full max-w-[48rem] mx-auto px-6 py-10">
       <slot />
     </main>
     <footer class="status-bar">
@@ -94,6 +95,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <script>
       import '../scripts/lang-dropdown';
       import '../scripts/clock';
+      import '../scripts/fade-in';
     </script>
   </body>
 </html>

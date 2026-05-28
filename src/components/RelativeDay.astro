@@ -1,0 +1,28 @@
+---
+interface Props {
+  from: Date | string;
+  daysOffset: number;
+  href?: string;
+  suffix?: string;
+}
+
+const { from, daysOffset, href, suffix } = Astro.props;
+
+const base = typeof from === 'string' ? new Date(from) : from;
+const target = new Date(base);
+target.setDate(target.getDate() + daysOffset);
+
+const formatted = target.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const tip = suffix ? `${formatted} (${suffix})` : formatted;
+---
+
+{href ? (
+  <a href={href} class="dashed-hint" data-tip={tip} aria-label={tip}><slot /></a>
+) : (
+  <span class="dashed-hint" tabindex="0" data-tip={tip} aria-label={tip}><slot /></span>
+)}

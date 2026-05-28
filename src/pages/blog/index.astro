@@ -2,8 +2,16 @@
 import Layout from '../../layouts/Layout.astro';
 import Section from '../../components/Section.astro';
 import { useTranslations } from '../../i18n/utils';
+import { getCollection } from 'astro:content';
 
-const t = useTranslations('en');
+const lang = 'en';
+const t = useTranslations(lang);
+
+const posts = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`)))
+  .sort((a, b) => (b.data.published?.getTime() ?? 0) - (a.data.published?.getTime() ?? 0));
+
+const dateFmt = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' });
+const slugOf = (id: string) => id.replace(/\/[^/]+$/, '');
 ---
 
 <Layout title={t('blog.title')}>
@@ -12,7 +20,52 @@ const t = useTranslations('en');
     <p class="text-subtle text-sm">{t('blog.subtitle')}</p>
   </Section>
 
-  <Section dashed delay={0.07}>
-    <p class="text-sm text-subtle">{t('blog.empty')}</p>
-  </Section>
+  {posts.length === 0 ? (
+    <Section dashed delay={0.07}>
+      <p class="text-sm text-subtle">{t('blog.empty')}</p>
+    </Section>
+  ) : (
+    <Section delay={0.07}>
+      <ul class="blog-list">
+        {posts.map((p) => (
+          <li class="blog-list-item">
+            <a href={`/blog/${slugOf(p.id)}`} class="blog-list-link">
+              <span class="blog-list-title">{p.data.title}</span>
+              {p.data.published && (
+                <span class="blog-list-date">{dateFmt.format(p.data.published)}</span>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  )}
 </Layout>
+
+<style>
+  .blog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .blog-list-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .blog-list-link:hover .blog-list-title {
+    text-decoration: underline;
+  }
+
+  .blog-list-title {
+    font-weight: 600;
+  }
+
+  .blog-list-date {
+    font-size: 0.75rem;
+    color: var(--text-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+</style>

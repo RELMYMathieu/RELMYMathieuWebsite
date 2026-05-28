@@ -1,0 +1,207 @@
+---
+title: "ANGLE finally got Wayland support, and it's kind of a big deal"
+published: 2026-05-27
+---
+
+import RelativeDay from '../../../components/RelativeDay.astro';
+
+First off, hello blog!
+It's my first post here, and it's about a bit of a niche topic, but I enjoy writing about the little details of how things come together in the world of software.
+Today: Linux and Wayland.
+
+If you aren't familiar with the subject, with Linux, or with what a "Wayland" even is, do not worry.
+I will do my best to keep this as accessible as possible.
+I cannot promise everything will be perfectly clear, so do not hesitate to look up any term or concept that seems unfamiliar.
+I'll explain the terms in the first part, so do not worry if you do not get what I'm saying right away.
+
+If you've been running a native Wayland session on Linux and noticed that *some* apps just feel... off (input lag, focus breaking when you alt-tab, HDR compatibility being off), specifically the ones quietly falling back to XWayland, there's a good chance you've been suffering from a problem that just got fixed.
+Or well, the fix just landed.
+It'll take a little while to reach you (and the broader public), but the work is done.
+
+Let me explain what happened.
+
+---
+
+## The status quo, and the problem
+
+Quick context for anyone not deep in Linux world (and apologies to the people who are, feel free to skip ahead):
+
+When you open an app, something has to take the pixels that app wants to draw and actually put them on your screen, route your mouse and keyboard input back to it, decide where the window goes, layer it above or below other windows, and so on.
+The rules for how that whole conversation between apps and the system works are called a **display server protocol**.
+
+A few of these exist in the Linux world, but the two that matter for this story are:
+
+- **X11** (the protocol; the implementation pretty much everyone runs is called [X.Org](https://www.x.org/)): the old one. Designed in the 1980s, served well for decades, and is meant to be retired at this point.
+- **Wayland**: the replacement. The [Wayland project itself](https://wayland.freedesktop.org) describes it as "a replacement for the X11 window system protocol and architecture." Cleaner, faster, more secure, and designed to address the things X11 got wrong in hindsight.
+
+The catch is that basically every Linux app spent decades assuming X11 existed, so switching is slow.
+That's where this story is set.
+
+Wayland has been "the future" for a while now.
+KDE, GNOME, pretty much every major desktop environment has pushed hard for it, and for the most part it works great.
+Native apps feel snappy, input handling is clean, compositors like Gamescope can do cool things with it.
+
+(For non-Linux folks: a compositor is the program that takes the windows each app draws and combines them into the final image on your screen, while also handling input routing and effects. Gamescope is Valve's tiny embedded compositor used on the Steam Deck that runs each game in its own private display, letting Steam control resolution, framerate, handles HDR which XWayland has issues with, and overlay independently.)
+
+But there's always been this awkward group of apps that didn't quite fit the Wayland ecosystem.
+Spotify.
+Discord.
+Steam's in-game overlay (the whole thing, not just the browser part inside it).
+OBS's browser source.
+
+At best, they'd open and render but something would feel subtly off: input lag, focus weirdness, the overlay drawing wrong, that kind of thing.
+At worst, they straight-up wouldn't work.
+OBS's browser source is officially unsupported on Wayland Linux.
+Discord's screen sharing was famously broken.
+Steam's overlay had its own catalogue of issues.
+Spotify spent years as a janky XWayland blob before recently shipping native Wayland (and even that is still rocky).
+
+And the reason for the awkwardness is XWayland.
+
+XWayland is a compatibility layer that lets X11 apps run inside a Wayland session.
+It's not bad. It's actually pretty brilliant as a gap-filler. But it's a layer of misdirection.
+Input events go through a different path, focus handling behaves differently, HDR doesn't pass through cleanly, and you're essentially running a mini X server inside your Wayland compositor.
+For most things it's invisible, but for overlays and anything that needs to interact closely with the compositor, it breaks pretty badly.
+
+The frustrating part is that these apps *could* have been native Wayland.
+The technology was there.
+Something in the graphics stack was just missing.
+
+---
+
+## CEF, the web rendering engine inside "everything"
+
+Here's something most people who aren't tech-savvy don't know: Steam's overlay, Spotify, OBS's browser source, the Epic Games Launcher, Battle.net, Amazon Music, and a bunch of other apps all run on the same embedded browser engine under the hood.
+It's called CEF, the Chromium Embedded Framework.
+It lets developers drop a basically-full Chromium into their app, without building a browser from scratch.
+
+CEF is why Spotify can show you lyrics with smooth animations.
+It's why the Steam overlay works at all (the whole `steamwebhelper` process is CEF).
+It's in a lot of places, and most users usually wouldn't know.
+
+Now, CEF needs a graphics backend to actually render things.
+And that's where ANGLE comes in!
+
+---
+
+## ANGLE, the layer nobody talks about
+
+ANGLE stands for Almost Native Graphics Layer Engine, and it's a Google project.
+What it does is take OpenGL ES calls (the graphics API that web content and a lot of apps utilize) and translate them
+to whatever the platform actually supports.
+On Windows, that's Direct3D 11 (with a Direct3D 9 fallback for older systems).
+On macOS and iOS, it's Metal.
+On Linux, it's Vulkan or desktop OpenGL.
+And on Android it's Vulkan or GLES.
+
+It's the reason WebGL works everywhere: Chrome, Firefox, and Safari all route WebGL through ANGLE these days (Safari did it most recently, around Safari 15).
+It's also the reason Chrome's rendering is consistent across platforms.
+
+CEF uses ANGLE as its rendering backend.
+So when CEF needs to draw something on screen, it goes through ANGLE.
+
+And until <RelativeDay from={frontmatter.published} daysOffset={-1} href="https://chromium-review.googlesource.com/c/angle/angle/+/7844989" suffix="the day before this post">yesterday</RelativeDay>, ANGLE had no native Wayland support.
+
+---
+
+## The missing piece
+
+ANGLE knew how to create windows on X11.
+It knew how to render via Vulkan, Direct3D, or Metal.
+There were partial Wayland type definitions floating around in some headers, but no working native Wayland window path.
+No way to create a surface, no way to connect to the compositor directly, nothing usable.
+
+So when CEF ran on a Wayland session, it couldn't use ANGLE's native window creation path.
+It fell back to XWayland.
+Every single time, for every single app built on CEF.
+Some apps didn't even try and just flat-out didn't work on Wayland (OBS's browser source, for example, is documented as unsupported on Wayland Linux).
+
+Chromium browsers themselves were fine.
+Chrome and Chromium have their own platform abstraction layer called **Ozone** that handles Wayland directly, bypassing ANGLE for windowing. (Ozone is Chromium's internal "swap-in" layer that lets the same browser code run on Wayland, X11, ChromeOS, or headless by hiding the platform-specific windowing details behind one interface. Ozone owns the surface and ANGLE draws into it.)
+
+But anything that embeds CEF standalone, outside of a full Chrome build, was stuck.
+
+There's been a CEF issue tracking this in their Bitbucket tracker (the GitHub repo is just a mirror, and Bitbucket gates issue views behind a login, so I'm not linking the URL directly).
+Almost seven years.
+
+---
+
+## January 2025, someone starts the work
+
+A developer named Joel Winarske opened [CL 6164683](https://chromium-review.googlesource.com/c/angle/angle/+/6164683) against the ANGLE repository in early 2025.
+The title was simply "Wayland support".
+
+101 files changed.
+New vendored copies of the Wayland client library, wayland-protocols, and expat (an XML parser needed by the Wayland scanner), all brought directly into ANGLE so there's no external dependency to worry about.
+New `WaylandWindow` and `WindowSurfaceVkWayland` classes implementing the actual surface and window lifecycle for Wayland.
+
+(For non-techy folks: in plain English, ANGLE now bundles its own copy of everything it needs to talk to Wayland directly inside itself, so it doesn't depend on whatever's installed on the user's system. Plus brand-new code to actually create and manage Wayland windows from scratch. Techy folks: yes, "vendoring" the deps means no external linkage required, which is the whole point.)
+
+Our friend Joel, however, went silent after posting the CL. No updates, no responses to comments, nothing, after Patchset 3.
+The CL just sat there, waiting for someone else to pick it up.
+After a few months of inactivity, I decided to ask a simple question in the comments: "Is there anything currently blocking it from progressing?"
+
+After a few weeks, this comment attracted the attention of another developer, Dianda Lin.
+She picked up Joel's dormant CL, responded to the comments, and started pushing the work forward in [her own forked CL](https://chromium-review.googlesource.com/c/angle/angle/+/7844989).
+(Side note: if you check the Gerrit author metadata, it still lists Joel as the author on the landed CL. She seems to have flubbed the authoring credit a few times during the pickup, which is why public trackers credit Joel for everything. But the real continuation work was hers.)
+
+The review took over a year, counting from Joel's original CL in January 2025.
+It went through multiple rounds of feedback from Google's ANGLE team, with Yuly Novikov and Shahbaz Youssefi as the main reviewers.
+These things take time.
+
+---
+
+## May 26, 2026, it lands
+
+The commit landed in ANGLE's main branch on May 26, 2026, as [`f0a91999`](https://chromium.googlesource.com/angle/angle/+/f0a91999e58352882c8f7a02449d23aa9d50143d).
+Within a day it was rolled into Chromium's main branch via the automated ANGLE roller, and it's already in Chrome Canary builds as of today.
+
+I actually verified this locally: built ANGLE from that exact commit with Wayland enabled, ran the `simple_instancing` sample, and `xlsclients` didn't list it while it was running.
+Steam, Discord, and steamwebhelper all showed up there because they're still on XWayland.
+The ANGLE sample didn't, because it's using the new `WaylandWindow` code directly.
+
+What this means in easier terms is that ANGLE has successfully managed to create a native Wayland window, render to it using Vulkan, and present it on the screen, all without going through XWayland.
+We confirmed that by checking the running processes and seeing that the ANGLE sample was not listed as an X client.
+
+---
+
+## What happens next
+
+Although this is a huge milestone, it's not the end of the road for CEF's Wayland support.
+
+As we said earlier, CEF is a project that embeds a Chromium rendering engine, and it relies on ANGLE for its graphics backend.
+
+However, ANGLE having this doesn't automatically fix CEF.
+CEF doesn't pin ANGLE directly: it pins a specific Chromium revision (see [`CHROMIUM_BUILD_COMPATIBILITY.txt`](https://bitbucket.org/chromiumembedded/cef/src/master/CHROMIUM_BUILD_COMPATIBILITY.txt) in CEF's canonical Bitbucket repo), and Chromium in turn pins ANGLE.
+So the chain is CEF → Chromium → ANGLE, and CEF will have to wait for a Chromium release that includes `f0a91999` before they can pull it through, then wire up the new window creation path on their side.
+
+Luckily, this should not be a huge amount of work for the CEF team.
+The new Wayland classes are clean additions, not refactors of existing code, so there shouldn't be anything breaking.
+Once the changes to the ANGLE side are live in a stable Chrome release, the CEF maintainers can update their Chromium revision, do some testing to make sure nothing is broken, and then ship it in a new CEF release.
+A reasonable guess: a week or two for the CEF team to integrate, test, and ship it.
+No major API changes expected.
+
+Although the blocker is now gone, it may take a while for the benefits to be felt by users.
+Even after CEF ships a new release with the updated ANGLE (which may itself take time to roll out), apps that embed CEF will need to update to that new CEF version to get the benefits (which may also take a while to propagate).
+
+---
+
+## What it means
+
+Once CEF picks this up, and the apps that embed CEF update to the new version, there will be significant improvements in how those apps behave on Wayland. For example:
+
+Steam's in-game overlay becomes a native Wayland client.
+This essentially fixes a whole category of problems XWayland caused for it. It would be too much to go into detail,
+but it is notable that this may also fix the overlay outright not working at all in some instances.
+
+On SteamOS and with Gamescope specifically, this is probably a small plus.
+Gamescope is itself an XWayland-based microcompositor, so anything in the rendering path that can stay native Wayland instead of crossing into XWayland is one less source of indirection.
+The HDR path *might* also get simpler when you're not crossing the XWayland boundary, though I'd hesitate to make a strong claim there without specific test data.
+
+And more broadly, it means any app that embeds CEF (Spotify, OBS, the Steam overlay, and others) has a clear path to dropping XWayland for their rendering.
+Some will be faster than others to adapt.
+But the main blocker is gone.
+
+After years of "waiting on ANGLE" ends here, for many developers, and to the benefit of a lot of Wayland users, soon to come to your nearest CEF-based app.
+
+---

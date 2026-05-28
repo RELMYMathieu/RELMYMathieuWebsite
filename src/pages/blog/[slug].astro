@@ -1,0 +1,71 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', (e) => e.id.endsWith('/en'));
+  return posts.map((p) => ({
+    params: { slug: p.id.replace(/\/[^/]+$/, '') },
+    props: { post: p },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const dateFmt = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' });
+---
+
+<Layout title={post.data.title}>
+  <a href="/blog" class="back-link" data-fade-in data-fade-delay="0">← back to blog</a>
+  <article class="prose-mdx" data-fade-in data-fade-delay="0.05">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold leading-tight mb-2">{post.data.title}</h1>
+      <p class="post-meta">
+        {post.data.published && (
+          <span>Published {dateFmt.format(post.data.published)}</span>
+        )}
+        <span class="post-meta-sep">·</span>
+        {post.data.lastUpdated ? (
+          <span>Last updated {dateFmt.format(post.data.lastUpdated)}</span>
+        ) : (
+          <span class="post-meta-empty">not updated yet</span>
+        )}
+      </p>
+    </header>
+    <Content />
+  </article>
+</Layout>
+
+<style>
+  .back-link {
+    display: inline-block;
+    font-size: 0.8125rem;
+    color: var(--text-subtle);
+    margin-bottom: 1.5rem;
+    transition: color 0.15s ease;
+  }
+
+  .back-link:hover {
+    color: var(--text-main);
+    text-decoration: underline;
+  }
+
+  .post-meta {
+    font-size: 0.8125rem;
+    color: var(--text-subtle);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: baseline;
+  }
+
+  .post-meta-sep {
+    opacity: 0.5;
+  }
+
+  .post-meta-empty {
+    font-style: italic;
+    opacity: 0.7;
+  }
+</style>

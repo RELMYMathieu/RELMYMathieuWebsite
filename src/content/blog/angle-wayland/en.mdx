@@ -5,9 +5,9 @@ published: 2026-05-27
 
 import RelativeDay from '../../../components/RelativeDay.astro';
 
-For about a decade now, Linux has been quietly migrating off a display system designed in the 1980s. Most of that move has gone smoothly. But a stubborn handful of apps never quite made the jump: Spotify, Discord, Steam's in-game overlay. They'd run, sort of, while feeling subtly broken in ways nobody could fully explain to a regular user. Input lag. Focus breaking when you alt-tab. HDR refusing to behave.
+For about a decade now, Linux has been quietly migrating off a display system designed in the 1980s. Most of that move has gone smoothly. But a stubborn handful of apps never quite made the jump: Spotify, Discord, Steam's in-game overlay. They'd run, sort of, while feeling subtly broken in ways nobody could fully explain to a regular user. These issues would range from things such as input lag, to focus breaking when you alt-tab, and HDR refusing to behave. This of course isn't an exhaustive list, but it is meant to give an idea.
 
-The reason, it turned out, was the same for every one of them: they all lean on a single shared piece of graphics plumbing, and that one piece had never learned to talk to Wayland directly. So it faked it, routing everything through an old compatibility layer, and the cracks showed.
+The reason, it turned out, was the same for every one of them: they all lean on a single shared piece of graphics plumbing, and that one piece had never learned to talk to Wayland directly. So instead, everything fell back to an older compatibility layer, one that painstakingly emulates a full legacy X11 session inside Wayland, and the inherent issues showed.
 
 Just <RelativeDay from={frontmatter.published} daysOffset={-1}>yesterday</RelativeDay>, somebody finally did. And how it got there is the kind of small, fiddly software story I find genuinely fascinating, so let me walk you through it.
 
@@ -207,6 +207,6 @@ Some will be faster than others to adapt.
 But the main blocker is gone.
 
 Years of "waiting on ANGLE" end here.
-It'll take a bit to trickle down, but it's coming soon, to a CEF-based app near you.
+It'll take a bit to trickle down, but it's coming - soon, to a CEF-based app near you.
 
 ---

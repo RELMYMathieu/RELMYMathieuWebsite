@@ -5,15 +5,15 @@ published: 2026-05-27
 
 import RelativeDay from '../../../components/RelativeDay.astro';
 
-For about a decade now, Linux has been quietly migrating off a display system designed in the 1980s. Most of that move has gone smoothly. But a stubborn handful of apps never quite made the jump: Spotify, Discord, Steam's in-game overlay. They'd run, sort of, while feeling subtly broken in ways nobody could fully explain to a regular user. These issues would range from things such as input lag, to focus breaking when you alt-tab, and HDR refusing to behave. This of course isn't an exhaustive list, but it is meant to give an idea.
+For about a decade now, Linux has been quietly migrating off a window display system designed in the 1980s. Most of that move has gone smoothly. But a stubborn handful of apps never quite seemed to make the jump: Spotify, Discord, Steam's in-game overlay. They'd run, sort of, while feeling subtly broken in ways nobody could fully explain to a regular user. These issues would range from input lag, to focus breaking when you alt-tab, to HDR refusing to behave. This of course isn't an exhaustive list, but it is meant to give you an idea.
 
-The reason, it turned out, was the same for every one of them: they all lean on a single shared piece of graphics plumbing, and that one piece had never learned to talk to Wayland directly. So instead, everything fell back to an older compatibility layer, one that painstakingly emulates a full legacy X11 session inside Wayland, and the inherent issues showed.
+The reason, it turned out, was the same for every one of them: they all lean on a single shared piece of graphics plumbing, and that one piece had never learned to talk to Wayland directly. So instead, everything fell back to an older compatibility layer, one that emulates a full legacy X11 session inside Wayland, and the inherent issues showed.
 
-Just <RelativeDay from={frontmatter.published} daysOffset={-1}>yesterday</RelativeDay>, somebody finally did. And how it got there is the kind of small, fiddly software story I find genuinely fascinating, so let me walk you through it.
+Just <RelativeDay from={frontmatter.published} daysOffset={-1}>yesterday</RelativeDay>, somebody finally fixed the issue at the center of this all. And how it got there is the kind of small, fiddly software story I find genuinely interesting, so let me walk you through it.
 
-First though, hello blog! This is my first post here. It's a niche topic, but I enjoy writing about the little details of how things come together in software, and this is a good one. If you're not deep in Linux world, don't worry: I'll explain the terms as we go, and you can look up anything that trips you up.
+First though, hello blog! This is my first post here. It's a niche topic, but I enjoy writing about the little details of how things come together in software, and this is a good one. If you're not deep in Linux world, don't worry: I'll explain the terms as we go, and you can look up anything that might be a bit unclear.
 
-Let me explain what happened.
+Now, let me explain what this story is about.
 
 ---
 
@@ -24,12 +24,12 @@ Quick context for anyone not deep in Linux world (and apologies to the people wh
 When you open an app, something has to take the pixels that app wants to draw and actually put them on your screen, route your mouse and keyboard input back to it, decide where the window goes, layer it above or below other windows, and so on.
 The rules for how that whole conversation between apps and the system works are called a **display server protocol**.
 
-A few of these exist in the Linux world, but the two that matter for this story are:
+A few of these exist for Linux-based systems, but the two that matter for this story are:
 
-- **X11** (the protocol; the implementation pretty much everyone runs is called [X.Org](https://www.x.org/)): the old one. Designed in the 1980s, served well for decades, and is meant to be retired at this point.
-- **Wayland**: the replacement. The [Wayland project itself](https://wayland.freedesktop.org) describes it as "a replacement for the X11 window system protocol and architecture." Cleaner, faster, more secure, and designed to address the things X11 got wrong in hindsight.
+- **X11** (the "original" protocol; the implementation pretty much everyone runs is called [X.Org](https://www.x.org/)): the old one. Designed in the 1980s, served well for decades, and is meant to be retired at this point.
+- **Wayland**: the replacement. The [Wayland project itself](https://wayland.freedesktop.org) describes it as "a replacement for the X11 window system protocol and architecture." Cleaner, faster, more secure, and designed to fix the things X11 got wrong, now with decades of hindsight to learn from.
 
-The catch is that basically every Linux app spent decades assuming X11 existed, so switching is slow.
+The catch is that basically every Linux app spent decades assuming X11 was the standard, so switching is slow.
 That's where this story is set.
 
 Wayland has been "the future" for a while now.
@@ -49,12 +49,12 @@ At worst, they straight-up wouldn't work.
 OBS's browser source is officially unsupported on Wayland Linux.
 Discord's screen sharing was famously broken.
 Steam's overlay had its own catalogue of issues.
-Spotify spent years as a janky XWayland blob before recently shipping native Wayland (and even that is still rocky).
+Spotify spent years as a janky XWayland blob before recently shipping native Wayland (and even that is still unreliable).
 
 And the reason for the awkwardness is XWayland.
 
 XWayland is a compatibility layer that lets X11 apps run inside a Wayland session.
-It's not bad. It's actually pretty brilliant as a gap-filler. But it's a layer of indirection.
+It's not bad. It's actually pretty brilliant as a gap-filler. But it's a layer that has racked up a lot of complexity and bears the weight of trying to emulate an X11 that's grown overly complex over the decades.
 Input events go through a different path, focus handling behaves differently, HDR doesn't pass through cleanly, and you're essentially running a mini X server inside your Wayland compositor.
 For most things it's invisible, but for overlays and anything that needs to interact closely with the compositor, it breaks pretty badly.
 
@@ -137,13 +137,11 @@ And then Joel went silent.
 No updates, no responses to comments, nothing, after Patchset 3.
 The CL just sat there, the way these things do: a near-complete fix to a seven-year-old problem, parked, waiting for someone to care enough to pick it up.
 
-After a few months of watching it not move, I figured I'd at least ask. So I left a comment: "Is there anything currently blocking it from progressing?"
+After a few months of watching it not move, I left a comment asking if anything was blocking it from progressing.
 
-That's it. One question. I didn't expect much.
-
-A few weeks later, it caught the attention of another developer, Dianda Lin.
+Conveniently enough, a few weeks later it caught the attention of another developer, Dianda Lin.
 She picked up Joel's dormant CL, answered the open comments, and started pushing the work forward in [her own forked CL](https://chromium-review.googlesource.com/c/angle/angle/+/7844989).
-I won't pretend my comment is why the fix exists; the code was Joel's, the heavy lifting was Dianda's. But a dead thread came back to life right after someone poked it, and I was the one who poked. I'll take that.
+Nice timing on my part, I guess. The code was Joel's, and the heavy lifting of getting it past review was Dianda's regardless.
 
 (Side note: if you check the Gerrit author metadata, it still lists Joel as the author on the landed CL. She seems to have flubbed the authoring credit a few times during the pickup, which is why public trackers credit Joel for everything. But the real continuation work was hers.)
 
@@ -159,7 +157,7 @@ The commit landed in ANGLE's main branch on May 26, 2026, as [`f0a91999`](https:
 Within a day it was rolled into Chromium's main branch via the automated ANGLE roller, and it's already in Chrome Canary builds as of <RelativeDay from={frontmatter.published} daysOffset={0}>today</RelativeDay>.
 
 I actually verified this locally: built ANGLE from that exact commit with Wayland enabled, ran the `simple_instancing` sample, and `xlsclients` didn't list it while it was running.
-Steam, Discord, and steamwebhelper all showed up there because they're still on XWayland.
+Steam, Discord, and `steamwebhelper` all showed up there because they're still on XWayland.
 The ANGLE sample didn't, because it's using the new `WaylandWindow` code directly.
 
 In plainer terms: ANGLE created a native Wayland window, rendered to it with Vulkan, and put it on screen, all without touching XWayland.
@@ -177,12 +175,16 @@ As I mentioned, CEF embeds a Chromium rendering engine and relies on ANGLE for i
 
 But ANGLE having it doesn't automatically fix CEF.
 CEF doesn't pin ANGLE directly: it pins a specific Chromium revision (see [`CHROMIUM_BUILD_COMPATIBILITY.txt`](https://bitbucket.org/chromiumembedded/cef/src/master/CHROMIUM_BUILD_COMPATIBILITY.txt) in CEF's canonical Bitbucket repo), and Chromium in turn pins ANGLE.
-So the chain is CEF → Chromium → ANGLE, and CEF will have to wait for a Chromium release that includes `f0a91999` before they can pull it through, then wire up the new window creation path on their side.
+So the chain is CEF => Chromium => ANGLE, and CEF will have to wait for a Chromium release that includes `f0a91999` before they can pull it through, then wire up the new window creation path on their side.
 
-Luckily, this shouldn't be a huge amount of work for the CEF team.
+Luckily, the CEF side itself shouldn't be a huge amount of work.
 The new Wayland classes are clean additions, not refactors of existing code, so there shouldn't be anything breaking.
-Once the changes to the ANGLE side are live in a stable Chrome release, the CEF maintainers can update their Chromium revision, do some testing to make sure nothing is broken, and then ship it in a new CEF release.
-A reasonable guess: a week or two for the CEF team to integrate, test, and ship it.
+
+The catch is everything that has to happen *before* CEF can even start.
+The ANGLE change first has to roll through Chromium and ride that into a **stable** Chrome release, and that's the real unknown: it could be a few weeks or a couple of months depending on where it lands in the release train.
+Only once it's in stable Chrome can the CEF maintainers bump their Chromium revision, test that nothing broke, and ship a new CEF release.
+
+So while the CEF integration itself is probably a week or two of actual work, the whole thing realistically lands months out, not weeks.
 No major API changes expected.
 
 The blocker is gone, but it'll still take a while for users to feel the benefits.
@@ -199,7 +201,7 @@ That clears out a whole category of XWayland-caused problems in one go. I won't 
 but notably it might also fix the cases where the overlay simply doesn't show up at all.
 
 On SteamOS and with Gamescope specifically, this is probably a small plus.
-Gamescope is itself an XWayland-based microcompositor, so anything in the rendering path that can stay native Wayland instead of crossing into XWayland is one less source of indirection.
+Gamescope itself runs games through an embedded XWayland, so anything in the rendering path that can stay native Wayland instead of crossing into XWayland is one less source of indirection.
 The HDR path *might* also get simpler when you're not crossing the XWayland boundary, though I'd hesitate to make a strong claim there without specific test data.
 
 And more broadly, it means any app that embeds CEF (Spotify, OBS, the Steam overlay, and others) has a clear path to dropping XWayland for their rendering.
@@ -207,6 +209,6 @@ Some will be faster than others to adapt.
 But the main blocker is gone.
 
 Years of "waiting on ANGLE" end here.
-It'll take a bit to trickle down, but it's coming - soon, to a CEF-based app near you.
+It'll take a bit to trickle down, but it's coming soon, to a CEF-based app near you.
 
 ---

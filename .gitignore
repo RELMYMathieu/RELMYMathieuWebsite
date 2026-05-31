@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # vscode agents
 .agents/
+
+# local task files
+TODO.md

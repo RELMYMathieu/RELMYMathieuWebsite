@@ -258,7 +258,14 @@ export function initWorkWindows(): void {
 
   if (backdrop.dataset.wwBound !== '1') {
     backdrop.dataset.wwBound = '1';
-    backdrop.addEventListener('click', unfocus);
+    backdrop.addEventListener('click', () => {
+      if (isMobile()) {
+        const target = focused ?? topmostVisible();
+        if (target) close(target);
+      } else {
+        unfocus();
+      }
+    });
   }
 
   triggers.forEach((trigger) => {

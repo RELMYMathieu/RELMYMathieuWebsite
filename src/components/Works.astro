@@ -457,6 +457,15 @@ const works = await Promise.all(
   @media (max-width: 560px) {
     .ww-ctrl--desktop { display: none; }
 
+    .ww-backdrop,
+    .ww-backdrop.is-open {
+      transition: background 0.22s ease, visibility 0s linear 0.22s;
+    }
+
+    .ww-backdrop.is-open {
+      transition: background 0.22s ease, visibility 0s linear 0s;
+    }
+
     .ww {
       top: auto !important;
       left: 0 !important;

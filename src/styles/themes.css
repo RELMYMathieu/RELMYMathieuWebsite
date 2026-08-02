@@ -1,0 +1,117 @@
+:root,
+[data-theme='slate'] {
+  color-scheme: dark;
+
+  --theme-swatch: #a1a1aa;
+
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-subtle: #a1a1aa;
+
+  --surface-bg: #18181b;
+  --surface-peak: #1f1f26;
+  --surface-gradient:
+    radial-gradient(125% 105% at 50% 38%,
+      var(--surface-peak) 0%,
+      #18181b 55%,
+      #121215 100%);
+  --menu-bg: #1e1e23;
+  --border: #3f3f46;
+  --border-hover: #71717a;
+
+  --sheen: rgba(255, 255, 255, 0.04);
+  --well-bg: rgba(0, 0, 0, 0.3);
+  --code-bg: rgba(255, 255, 255, 0.05);
+  --scrim: rgba(0, 0, 0, 0.32);
+  --scrim-heavy: rgba(0, 0, 0, 0.85);
+
+  --hint-border: #9ca3af;
+  --hint-bg: #0a0a0a;
+  --hint-fg: #f4f4f5;
+
+  --lightbox-img-border: #52525b;
+  --lightbox-caption: #e4e4e7;
+
+  --ww-bg: var(--surface-bg);
+  --ww-fg: #f4f4f5;
+  --ww-muted: #a1a1aa;
+  --ww-prompt: #4ade80;
+}
+
+[data-theme='rem'] {
+  color-scheme: light;
+
+  --theme-swatch: oklch(0.79 0.093 248);
+
+  --text-main: oklch(0.277 0.024 256);
+  --text-muted: oklch(0.455 0.033 256);
+  --text-subtle: oklch(0.445 0.098 248);
+
+  --surface-bg: oklch(0.945 0.028 240);
+  --surface-peak: oklch(0.905 0.048 240);
+  --surface-gradient:
+    radial-gradient(125% 105% at 50% 38%,
+      oklch(0.958 0.018 240) 0%,
+      oklch(0.945 0.028 240) 55%,
+      var(--surface-peak) 100%);
+  --menu-bg: oklch(0.972 0.012 240);
+  --border: oklch(0.82 0.055 244);
+  --border-hover: oklch(0.575 0.105 250);
+
+  --sheen: oklch(0.79 0.093 248 / 0.25);
+  --well-bg: oklch(0.62 0.105 250 / 0.12);
+  --code-bg: oklch(0.79 0.093 248 / 0.28);
+  --scrim: oklch(0.277 0.024 256 / 0.35);
+  --scrim-heavy: oklch(0.277 0.024 256 / 0.82);
+
+  --hint-border: oklch(0.52 0.13 305);
+  --hint-bg: oklch(0.277 0.024 256);
+  --hint-fg: oklch(0.93 0.02 70);
+
+  --lightbox-img-border: oklch(0.62 0.105 250);
+  --lightbox-caption: oklch(0.455 0.033 256);
+
+  --ww-bg: oklch(0.972 0.012 240);
+  --ww-fg: oklch(0.277 0.024 256);
+  --ww-muted: oklch(0.455 0.033 256);
+  --ww-prompt: oklch(0.445 0.098 248);
+}
+
+[data-theme='ram'] {
+  color-scheme: light;
+
+  --theme-swatch: oklch(0.81 0.10 5);
+
+  --text-main: oklch(0.272 0.022 315);
+  --text-muted: oklch(0.455 0.030 315);
+  --text-subtle: oklch(0.455 0.155 5);
+
+  --surface-bg: oklch(0.945 0.028 355);
+  --surface-peak: oklch(0.905 0.048 355);
+  --surface-gradient:
+    radial-gradient(125% 105% at 50% 38%,
+      oklch(0.958 0.018 355) 0%,
+      oklch(0.945 0.028 355) 55%,
+      var(--surface-peak) 100%);
+  --menu-bg: oklch(0.972 0.012 355);
+  --border: oklch(0.84 0.060 355);
+  --border-hover: oklch(0.585 0.130 0);
+
+  --sheen: oklch(0.81 0.10 5 / 0.28);
+  --well-bg: oklch(0.50 0.10 300 / 0.12);
+  --code-bg: oklch(0.81 0.10 5 / 0.3);
+  --scrim: oklch(0.272 0.022 315 / 0.35);
+  --scrim-heavy: oklch(0.272 0.022 315 / 0.82);
+
+  --hint-border: oklch(0.50 0.10 300);
+  --hint-bg: oklch(0.272 0.022 315);
+  --hint-fg: oklch(0.93 0.025 60);
+
+  --lightbox-img-border: oklch(0.62 0.130 0);
+  --lightbox-caption: oklch(0.455 0.030 315);
+
+  --ww-bg: oklch(0.972 0.012 355);
+  --ww-fg: oklch(0.272 0.022 315);
+  --ww-muted: oklch(0.455 0.030 315);
+  --ww-prompt: oklch(0.455 0.155 5);
+}

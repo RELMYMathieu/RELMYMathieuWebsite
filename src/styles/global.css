@@ -1,48 +1,27 @@
 @import "tailwindcss";
+@import "./themes.css";
 
 @theme {
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
 :root {
-  color-scheme: dark;
-
   --radius: 4px;
   --radius-lg: 8px;
+}
 
-  --gray-400: #9ca3af;
+body {
+  background-color: var(--surface-bg);
+  background-image: var(--surface-gradient);
+  background-repeat: no-repeat;
+  color: var(--text-main);
+}
 
-  --zinc-100: #f4f4f5;
-  --zinc-200: #e4e4e7;
-  --zinc-400: #a1a1aa;
-  --zinc-500: #71717a;
-  --zinc-600: #52525b;
-  --zinc-700: #3f3f46;
-  --zinc-900: #18181b;
-  --zinc-950: #0a0a0a;
-
-  --green-400: #4ade80;
-
-  --text-main: var(--zinc-100);
-  --text-muted: var(--zinc-400);
-  --text-subtle: var(--zinc-400);
-  --surface-bg: var(--zinc-900);
-  --surface-hover: rgba(255, 255, 255, 0.03);
-  --border: var(--zinc-700);
-  --border-hover: var(--zinc-500);
-  --menu-bg: var(--zinc-900);
-
-  --hint-border: var(--gray-400);
-  --hint-bg: var(--zinc-950);
-  --hint-fg: var(--zinc-100);
-
-  --lightbox-img-border: var(--zinc-600);
-  --lightbox-caption: var(--zinc-200);
-
-  --ww-bg: var(--surface-bg);
-  --ww-fg: var(--zinc-100);
-  --ww-muted: var(--zinc-400);
-  --ww-prompt: var(--green-400);
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
 }
 
 .prompt-line {
@@ -208,14 +187,14 @@ button.dashed-hint {
 
 .prose-mdx code {
   font-family: inherit;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--code-bg);
   padding: 0.15rem 0.35rem;
   border-radius: 3px;
   font-size: 0.9em;
 }
 
 .prose-mdx pre {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--well-bg);
   padding: 0.85rem 1rem;
   border-radius: var(--radius);
   overflow-x: auto;

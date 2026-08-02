@@ -4,6 +4,9 @@ import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations, useTranslatedPath, getRawPath } from '../i18n/utils';
 import { LOCALES, getLocale } from '../i18n/config';
+import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from '../theme/config';
+
+const themeCodes = THEMES.map((t) => t.code);
 
 interface Props {
   title: string;
@@ -33,6 +36,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
 <html lang={htmlLang}>
   <head>
+    <script
+      is:inline
+      define:vars={{ themeCodes, fallback: DEFAULT_THEME, storageKey: THEME_STORAGE_KEY }}
+    >
+      try {
+        const stored = localStorage.getItem(storageKey);
+        document.documentElement.dataset.theme = themeCodes.includes(stored) ? stored : fallback;
+      } catch {
+        document.documentElement.dataset.theme = fallback;
+      }
+    </script>
     <meta charset="utf-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width" />
@@ -53,14 +67,39 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
     <ClientRouter />
   </head>
-  <body class="min-h-screen flex flex-col bg-zinc-900 text-zinc-100 font-mono">
+  <body class="min-h-screen flex flex-col font-mono">
     <a href="#main-content" class="skip-link">Skip to content</a>
     <nav class="nav-bar">
       <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
       <a href={translatePath('/blog')} class="nav-link">{t('nav.blog')}</a>
       <div class="ml-auto flex items-center gap-2">
         <span class="nav-clock" id="status-clock" aria-label="Time in Paris">[Paris --:--]</span>
-        <div class="lang-dropdown" id="lang-dropdown">
+        <div class="dropdown" id="theme-dropdown">
+          <button
+            id="theme-toggle"
+            type="button"
+            aria-haspopup="menu"
+            aria-controls="theme-menu"
+            aria-expanded="false"
+            aria-label={t('theme.label')}
+            data-label-base={t('theme.label')}
+            class="nav-link cursor-pointer"
+          >[<span class="theme-swatch"></span> ▾]</button>
+          <div class="dropdown-menu" id="theme-menu" role="menu" aria-label={t('theme.label')} aria-hidden="true">
+            {THEMES.map((th) => (
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked="false"
+                class="dropdown-option theme-option"
+                data-theme-code={th.code}
+              >
+                <span class="theme-swatch" style={`--swatch: ${th.swatch}`}></span>{th.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div class="dropdown" id="lang-dropdown">
           <button
             id="lang-toggle"
             type="button"
@@ -70,13 +109,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             aria-label="Switch language"
             class="nav-link cursor-pointer"
           >[{currentLocale.short} ▾]</button>
-          <div class="lang-menu" id="lang-menu" role="menu" aria-label="Language selector" aria-hidden="true">
+          <div class="dropdown-menu" id="lang-menu" role="menu" aria-label="Language selector" aria-hidden="true">
             {langLinks.map((l) => (
               <a
                 href={l.href}
                 role="menuitem"
                 lang={l.htmlLang}
-                class:list={['lang-option', { 'lang-option--active': l.active }]}
+                class:list={['dropdown-option', { 'dropdown-option--active': l.active }]}
                 aria-current={l.active ? 'page' : undefined}
                 aria-label={`Switch to ${l.label}`}
               >{l.short}</a>
@@ -85,7 +124,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         </div>
       </div>
     </nav>
-    <main id="main-content" class="flex-1 w-full max-w-[48rem] mx-auto px-6 py-10">
+    <main id="main-content" class="flex-1 w-full max-w-3xl mx-auto px-6 py-10">
       <slot />
     </main>
     <footer class="status-bar">
@@ -93,6 +132,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       <span class="status-seg status-seg--muted" aria-hidden="true">(｡･∀･)ﾉﾞ</span>
     </footer>
     <script>
+      import '../scripts/theme';
+      import '../scripts/theme-dropdown';
       import '../scripts/lang-dropdown';
       import '../scripts/clock';
       import '../scripts/fade-in';
@@ -141,11 +182,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     text-decoration: underline;
   }
 
-  .lang-dropdown {
+  .dropdown {
     position: relative;
   }
 
-  .lang-menu {
+  .dropdown-menu {
     position: absolute;
     right: 0;
     top: calc(100% + 4px);
@@ -168,7 +209,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       visibility 0s linear 0.18s;
   }
 
-  .lang-menu.is-open {
+  .dropdown-menu.is-open {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
@@ -179,24 +220,48 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       visibility 0s linear 0s;
   }
 
-  .lang-option {
+  .dropdown-option {
     display: block;
     padding: 0.4rem 0.75rem;
     font-size: 0.875rem;
     text-align: center;
   }
 
-  .lang-option:hover {
+  .dropdown-option:hover {
     text-decoration: underline;
   }
 
-  .lang-option:focus-visible {
+  .dropdown-option:focus-visible {
     outline: 2px dashed currentColor;
     outline-offset: 2px;
   }
 
-  .lang-option--active {
+  .dropdown-option--active {
     font-weight: 700;
+  }
+
+  .theme-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .theme-swatch {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--swatch, var(--theme-swatch));
+    transition: background-color 0.18s ease;
   }
 
   .status-bar {

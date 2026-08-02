@@ -12,6 +12,7 @@ export const ui = {
   en: {
     'nav.home': '~/home',
     'nav.blog': '~/blog',
+    'theme.label': 'Switch theme',
     'footer.credit': 'Made by Relmy Mathieu and built with Astro.',
     'blog.title': 'Blog',
     'blog.subtitle': 'thoughts, notes, whatever',
@@ -30,6 +31,7 @@ export const ui = {
   'fr-fr': {
     'nav.home': '~/accueil',
     'nav.blog': '~/blog',
+    'theme.label': 'Changer de thème',
     'footer.credit': 'Fait par Relmy Mathieu et construit avec Astro.',
     'blog.title': 'Blog',
     'blog.subtitle': 'pensées, notes, bref.',

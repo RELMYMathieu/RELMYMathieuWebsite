@@ -41,9 +41,11 @@
 
   --theme-swatch: oklch(0.79 0.093 248);
 
-  --grad-1: oklch(0.945 0.022 240);
+  --grad-pos: 50% 65%;
+  --grad-stop-2: 40%;
+  --grad-1: oklch(0.925 0.034 240);
   --grad-2: oklch(0.925 0.034 240);
-  --grad-3: oklch(0.878 0.055 240);
+  --grad-3: oklch(0.925 0.034 240);
 
   --text-main: oklch(0.277 0.024 256);
   --text-muted: oklch(0.455 0.033 256);
@@ -78,9 +80,11 @@
 
   --theme-swatch: oklch(0.81 0.10 5);
 
-  --grad-1: oklch(0.945 0.022 355);
+  --grad-pos: 50% 65%;
+  --grad-stop-2: 40%;
+  --grad-1: oklch(0.925 0.034 355);
   --grad-2: oklch(0.925 0.034 355);
-  --grad-3: oklch(0.878 0.055 355);
+  --grad-3: oklch(0.925 0.034 355);
 
   --text-main: oklch(0.272 0.022 315);
   --text-muted: oklch(0.455 0.030 315);

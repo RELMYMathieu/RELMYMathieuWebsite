@@ -37,9 +37,9 @@
 body {
   background-color: var(--surface-bg);
   background-image: radial-gradient(
-    110% 78% at 50% 22%,
+    110% 78% at var(--grad-pos, 50% 22%),
     var(--grad-1) 0%,
-    var(--grad-2) 45%,
+    var(--grad-2) var(--grad-stop-2, 45%),
     var(--grad-3) 100%
   );
   background-repeat: no-repeat;

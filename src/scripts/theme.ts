@@ -1,4 +1,9 @@
 import { DEFAULT_THEME, THEME_STORAGE_KEY, isTheme, type Theme } from '../theme/config';
+import { prefersReducedMotion } from '../animations/runtime';
+
+const FADE_MS = 320;
+
+let fadeTimer: number | null = null;
 
 export function readStoredTheme(): Theme {
   try {
@@ -13,17 +18,19 @@ export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
 }
 
-function forceStyleRecalc(el: HTMLElement): void {
-  void el.offsetHeight;
-}
-
 export function setTheme(theme: Theme): void {
   const root = document.documentElement;
 
-  root.classList.add('theme-switching');
+  if (!prefersReducedMotion()) {
+    root.classList.add('theme-transition');
+    if (fadeTimer !== null) clearTimeout(fadeTimer);
+    fadeTimer = window.setTimeout(() => {
+      root.classList.remove('theme-transition');
+      fadeTimer = null;
+    }, FADE_MS + 200);
+  }
+
   applyTheme(theme);
-  forceStyleRecalc(root);
-  root.classList.remove('theme-switching');
 
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);

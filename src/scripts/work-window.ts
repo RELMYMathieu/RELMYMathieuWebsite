@@ -212,23 +212,24 @@ function bindDocumentListeners() {
   documentListenersBound = true;
 
   document.addEventListener('keydown', (e) => {
-    if (!focused) return;
-    const entry = windows.get(focused);
+    const target = focused ?? topmostVisible();
+    if (!target) return;
+    const entry = windows.get(target);
     if (!entry) return;
 
     if (e.key === 'Escape') {
       e.preventDefault();
-      if (entry.state === 'fullscreen') applyState(focused, 'normal');
-      else close(focused);
+      if (entry.state === 'fullscreen') applyState(target, 'normal');
+      else close(target);
       return;
     }
 
-    if (entry.state === 'minimized' || e.key !== 'Tab') return;
+    if (!focused || entry.state === 'minimized' || e.key !== 'Tab') return;
 
-    const focusable = getFocusable(focused);
+    const focusable = getFocusable(target);
     if (!focusable.length) {
       e.preventDefault();
-      focused.focus();
+      target.focus();
       return;
     }
 

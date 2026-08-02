@@ -5,23 +5,62 @@
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
+@property --grad-1 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #1e1e24;
+}
+
+@property --grad-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #18181b;
+}
+
+@property --grad-3 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #101013;
+}
+
 :root {
   --radius: 4px;
   --radius-lg: 8px;
+  --theme-fade: 320ms;
+
+  transition:
+    --grad-1 var(--theme-fade) ease,
+    --grad-2 var(--theme-fade) ease,
+    --grad-3 var(--theme-fade) ease;
 }
 
 body {
   background-color: var(--surface-bg);
-  background-image: var(--surface-gradient);
+  background-image: radial-gradient(
+    110% 78% at 50% 22%,
+    var(--grad-1) 0%,
+    var(--grad-2) 45%,
+    var(--grad-3) 100%
+  );
   background-repeat: no-repeat;
   color: var(--text-main);
 }
 
-.theme-switching,
-.theme-switching *,
-.theme-switching *::before,
-.theme-switching *::after {
-  transition: none !important;
+/* `color` is excluded, animating it hits the text layer,
+   dropping subpixel antialiasing until the fade ends and snapping it back.
+   it looks pretty bad when that happens */
+.theme-transition {
+  transition-property: --grad-1, --grad-2, --grad-3, background-color, border-color !important;
+  transition-duration: var(--theme-fade) !important;
+  transition-timing-function: ease !important;
+}
+
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition-property: background-color, border-color, outline-color !important;
+  transition-duration: var(--theme-fade) !important;
+  transition-timing-function: ease !important;
 }
 
 .prompt-line {
@@ -235,6 +274,10 @@ button.dashed-hint {
 /* ── Reduced motion ── */
 
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    transition: none;
+  }
+
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 0s;

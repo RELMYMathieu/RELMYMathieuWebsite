@@ -66,14 +66,19 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="twitter:description" content={description} />
 
     <ClientRouter />
+    <noscript>
+      <style>
+        [data-fade-in] { opacity: 1 !important; transform: none !important; }
+      </style>
+    </noscript>
   </head>
   <body class="min-h-screen flex flex-col font-mono">
-    <a href="#main-content" class="skip-link">Skip to content</a>
+    <a href="#main-content" class="skip-link">{t('nav.skip')}</a>
     <nav class="nav-bar">
       <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
       <a href={translatePath('/blog')} class="nav-link">{t('nav.blog')}</a>
       <div class="ml-auto flex items-center gap-2">
-        <span class="nav-clock" id="status-clock" aria-label="Time in Paris">[Paris --:--]</span>
+        <span class="nav-clock" id="status-clock">[Paris --:--]</span>
         <div class="dropdown" id="theme-dropdown">
           <button
             id="theme-toggle"
@@ -106,10 +111,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             aria-haspopup="menu"
             aria-controls="lang-menu"
             aria-expanded="false"
-            aria-label="Switch language"
+            aria-label={t('lang.label')}
             class="nav-link cursor-pointer"
           >[{currentLocale.short} ▾]</button>
-          <div class="dropdown-menu" id="lang-menu" role="menu" aria-label="Language selector" aria-hidden="true">
+          <div class="dropdown-menu" id="lang-menu" role="menu" aria-label={t('lang.menu')} aria-hidden="true">
             {langLinks.map((l) => (
               <a
                 href={l.href}
@@ -117,7 +122,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
                 lang={l.htmlLang}
                 class:list={['dropdown-option', { 'dropdown-option--active': l.active }]}
                 aria-current={l.active ? 'page' : undefined}
-                aria-label={`Switch to ${l.label}`}
+                aria-label={t('lang.switchTo').replace('{name}', l.label)}
               >{l.short}</a>
             ))}
           </div>
@@ -182,6 +187,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     text-decoration: underline;
   }
 
+  .nav-link:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 2px;
+  }
+
   .dropdown {
     position: relative;
   }
@@ -221,8 +231,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   }
 
   .dropdown-option {
-    display: block;
-    padding: 0.4rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.9rem;
     font-size: 0.875rem;
     text-align: center;
   }

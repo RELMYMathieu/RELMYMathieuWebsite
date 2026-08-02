@@ -57,7 +57,6 @@ const works = await Promise.all(
       </li>
     ))}
   </ul>
-  <p class="mobile-hint">{t('works.mobile-hint')}</p>
 </Section>
 
 <div class="ww-backdrop" id="ww-backdrop" aria-hidden="true"></div>
@@ -79,8 +78,8 @@ const works = await Promise.all(
       <span class="ww-titlebar__sep" aria-hidden="true">:</span>
       <span class="ww-titlebar__path" id={`ww-label-${w.id}`}>{w.path}</span>
       <div class="ww-controls">
-        <button class="ww-ctrl ww-ctrl--desktop" data-action="minimize" type="button" aria-label="Minimize">[−]</button>
-        <button class="ww-ctrl ww-ctrl--desktop" data-action="fullscreen" type="button" aria-label="Fullscreen">[□]</button>
+        <button class="ww-ctrl ww-ctrl--desktop" data-action="minimize" type="button" aria-label={t('ww.minimize')}>[−]</button>
+        <button class="ww-ctrl ww-ctrl--desktop" data-action="fullscreen" type="button" aria-label={t('ww.fullscreen')}>[□]</button>
         <button class="ww-ctrl" data-action="close" type="button" aria-label={t('works.close').replace('{name}', w.name)}>[×]</button>
       </div>
     </div>
@@ -182,28 +181,16 @@ const works = await Promise.all(
 
   .work-item__open {
     font-size: 0.75rem;
-    opacity: 0;
+    opacity: 0.45;
     transition: opacity 0.15s;
     white-space: nowrap;
-  }
-
-  .mobile-hint {
-    display: none;
-    margin-top: 1rem;
-    font-size: 0.7rem;
-    color: var(--text-subtle);
-    opacity: 0.6;
-    letter-spacing: 0.02em;
   }
 
   @media (max-width: 560px) {
     .work-item {
       grid-template-columns: 1fr auto;
+      row-gap: 0.15rem;
     }
-
-    .work-item__open { display: none; }
-
-    .mobile-hint { display: block; }
   }
 
   /* ── Backdrop ── */

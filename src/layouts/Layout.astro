@@ -34,7 +34,11 @@ const langLinks = LOCALES.map((l) => ({
 const currentLocale = getLocale(lang);
 const htmlLang = currentLocale.htmlLang;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const buildTimeFormatted = new Intl.DateTimeFormat(htmlLang, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(BUILD_TIME));
+const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'UTC',
+}).format(new Date(BUILD_TIME))} (UTC)`;
 ---
 
 <html lang={htmlLang}>

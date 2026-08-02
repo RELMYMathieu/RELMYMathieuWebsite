@@ -10,7 +10,6 @@ interface WinEntry {
   state: WindowState;
 }
 
-const DESKTOP_OPEN_TOP = '20vh';
 const Z_BASE = 100;
 const STAGGER = 24;
 
@@ -40,6 +39,20 @@ function lockScroll() {
 function unlockScroll() {
   document.body.style.overflow = '';
   document.body.style.paddingRight = '';
+}
+
+function pruneDetached() {
+  let anyOpen = false;
+  for (const [el, entry] of windows) {
+    if (!el.isConnected) {
+      windows.delete(el);
+      continue;
+    }
+    if (entry.state !== 'minimized') anyOpen = true;
+  }
+  if (focused && !focused.isConnected) focused = null;
+  if (activeBackdrop && !activeBackdrop.isConnected) activeBackdrop = null;
+  if (!anyOpen) unlockScroll();
 }
 
 function syncFocusChrome() {
@@ -182,8 +195,8 @@ function open(win: HTMLElement, trigger: HTMLButtonElement, backdrop: HTMLElemen
     const offset = visibleCount() * STAGGER;
     win.style.transition = 'none';
     win.style.left = `calc(50% + ${offset}px)`;
-    win.style.top = `calc(${DESKTOP_OPEN_TOP} + ${offset}px)`;
-    win.style.translate = '-50% 0';
+    win.style.top = `calc(50% + ${offset}px)`;
+    win.style.translate = '-50% -50%';
     win.style.transform = '';
     win.offsetHeight;
     win.style.transition = '';
@@ -248,8 +261,10 @@ function bindDocumentListeners() {
   window.addEventListener('resize', reflowMinimized);
 }
 
-export function initWorkWindows(): void {
-  const triggers = document.querySelectorAll<HTMLButtonElement>('button[data-work]');
+export function initWindowManager(): void {
+  pruneDetached();
+
+  const triggers = document.querySelectorAll<HTMLButtonElement>('button[data-ww-trigger]');
   if (!triggers.length) return;
 
   const backdrop = document.getElementById('ww-backdrop');
@@ -272,8 +287,9 @@ export function initWorkWindows(): void {
     if (trigger.dataset.wwBound === '1') return;
     trigger.dataset.wwBound = '1';
 
-    const workId = trigger.dataset.work!;
-    const win = document.getElementById(`ww-${workId}`);
+    const targetId = trigger.getAttribute('aria-controls');
+    if (!targetId) return;
+    const win = document.getElementById(targetId);
     if (!win) return;
 
     const handle = win.querySelector<HTMLElement>('[data-drag-handle]')!;
@@ -302,4 +318,4 @@ export function initWorkWindows(): void {
   bindDocumentListeners();
 }
 
-onPageReady(initWorkWindows);
+onPageReady(initWindowManager);

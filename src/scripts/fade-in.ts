@@ -1,6 +1,10 @@
-import { fadeIn, onceInView, onPageReady, prefersReducedMotion } from '../animations';
+import { fallIn, onceInView, onPageReady, prefersReducedMotion } from '../animations';
 
-function initFadeIns(): void {
+function bootPending(): boolean {
+  return !!document.getElementById('boot-screen') && document.documentElement.dataset.booted !== '1';
+}
+
+function runFadeIns(): void {
   const els = document.querySelectorAll<HTMLElement>('[data-fade-in]');
   const reduced = prefersReducedMotion();
 
@@ -18,9 +22,17 @@ function initFadeIns(): void {
     const inInitialViewport = el.getBoundingClientRect().top < window.innerHeight;
 
     onceInView(el, () => {
-      fadeIn(el, { delay: inInitialViewport ? stagger : 0 });
+      fallIn(el, { delay: inInitialViewport ? stagger : 0 });
     });
   }
+}
+
+function initFadeIns(): void {
+  if (bootPending()) {
+    document.addEventListener('site:booted', runFadeIns, { once: true });
+    return;
+  }
+  runFadeIns();
 }
 
 onPageReady(initFadeIns);

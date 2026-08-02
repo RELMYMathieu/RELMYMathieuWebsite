@@ -2,8 +2,23 @@
 import Layout from '../../../layouts/Layout.astro';
 import Section from '../../../components/Section.astro';
 import { useTranslations } from '../../../i18n/utils';
+import { getCollection, render } from 'astro:content';
 
-const t = useTranslations('fr-fr');
+const lang = 'fr-fr';
+const t = useTranslations(lang);
+
+const rawPosts = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`)))
+  .sort((a, b) => (b.data.published?.getTime() ?? 0) - (a.data.published?.getTime() ?? 0));
+
+const dateFmt = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
+const slugOf = (id: string) => id.replace(/\/[^/]+$/, '');
+
+const posts = await Promise.all(
+  rawPosts.map(async (p) => {
+    const { Content } = await render(p);
+    return { slug: slugOf(p.id), title: p.data.title, published: p.data.published, lastUpdated: p.data.lastUpdated, Content };
+  }),
+);
 ---
 
 <Layout title={t('blog.title')} description="Le blog de Relmy Mathieu, pensées, notes, bref.">
@@ -12,7 +27,161 @@ const t = useTranslations('fr-fr');
     <p class="text-subtle text-sm">{t('blog.subtitle')}</p>
   </Section>
 
-  <Section dashed delay={0.07}>
-    <p class="text-sm text-subtle">{t('blog.empty')}</p>
-  </Section>
+  {posts.length === 0 ? (
+    <Section dashed delay={0.07}>
+      <p class="text-sm text-subtle">{t('blog.empty')}</p>
+    </Section>
+  ) : (
+    <Section delay={0.07}>
+      <ul class="blog-list" role="list">
+        {posts.map((p) => (
+          <li>
+            <button
+              class="blog-list-item"
+              type="button"
+              data-ww-trigger
+              aria-haspopup="dialog"
+              aria-controls={`ww-blog-${p.slug}`}
+            >
+              <span class="blog-list-title">{p.title}</span>
+              {p.published && <span class="blog-list-date">{dateFmt.format(p.published)}</span>}
+              <span class="blog-list-open" aria-hidden="true">{t('blog.open')}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  )}
 </Layout>
+
+<div class="ww-backdrop" id="ww-backdrop" aria-hidden="true"></div>
+
+{posts.map((p) => (
+  <div
+    id={`ww-blog-${p.slug}`}
+    class="ww"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby={`ww-blog-label-${p.slug}`}
+    aria-describedby={`ww-blog-desc-${p.slug}`}
+    tabindex="-1"
+  >
+    <div class="ww-titlebar" data-drag-handle>
+      <span class="ww-titlebar__prompt" aria-hidden="true">blog@relmymathieu</span>
+      <span class="ww-titlebar__sep" aria-hidden="true">:</span>
+      <span class="ww-titlebar__path" id={`ww-blog-label-${p.slug}`}>~/blog/{p.slug}</span>
+      <div class="ww-controls">
+        <button class="ww-ctrl ww-ctrl--desktop" data-action="minimize" type="button" aria-label={t('ww.minimize')}>[−]</button>
+        <button class="ww-ctrl ww-ctrl--desktop" data-action="fullscreen" type="button" aria-label={t('ww.fullscreen')}>[□]</button>
+        <button class="ww-ctrl" data-action="close" type="button" aria-label={t('blog.close').replace('{name}', p.title)}>[×]</button>
+      </div>
+    </div>
+    <div class="ww-body" id={`ww-blog-desc-${p.slug}`}>
+      <div class="ww-content">
+        <h2 class="text-xl font-bold leading-tight">{p.title}</h2>
+        <p class="ww-meta">
+          {p.published && <span>{t('blog.published').replace('{date}', dateFmt.format(p.published))}</span>}
+          <span class="ww-meta-sep">·</span>
+          {p.lastUpdated ? (
+            <span>{t('blog.lastUpdated').replace('{date}', dateFmt.format(p.lastUpdated))}</span>
+          ) : (
+            <span class="ww-meta-empty">{t('blog.notUpdated')}</span>
+          )}
+        </p>
+        <div class="prose-mdx">
+          <p.Content />
+        </div>
+      </div>
+    </div>
+  </div>
+))}
+
+<style>
+  .blog-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .blog-list-item {
+    position: relative;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.625rem 0.5rem;
+    min-height: 2.75rem;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    border-bottom: 1px dashed var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.18s ease;
+    isolation: isolate;
+  }
+
+  .blog-list-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(90deg, var(--sheen), transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .blog-list-item:hover {
+    border-color: var(--border-hover);
+  }
+
+  .blog-list-item:hover::before {
+    opacity: 1;
+  }
+  .blog-list-item:hover .blog-list-open { opacity: 1; }
+
+  .blog-list-item:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 3px;
+  }
+
+  .blog-list-title { font-size: 0.875rem; font-weight: 600; }
+
+  .blog-list-date {
+    font-size: 0.75rem;
+    color: var(--text-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .blog-list-open {
+    font-size: 0.75rem;
+    opacity: 0.45;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 560px) {
+    .blog-list-item {
+      grid-template-columns: 1fr auto;
+      row-gap: 0.15rem;
+    }
+  }
+
+  .ww-meta-empty {
+    font-style: italic;
+    opacity: 0.7;
+  }
+</style>
+
+<script>
+  import '../../../scripts/window-manager';
+</script>

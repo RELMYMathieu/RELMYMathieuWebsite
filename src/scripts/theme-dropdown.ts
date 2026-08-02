@@ -26,6 +26,8 @@ function initThemeDropdown(): void {
   if (menu.dataset.bound === 'true') return;
   menu.dataset.bound = 'true';
 
+  toggle.addEventListener('click', () => markActive(menu, toggle, readStoredTheme()));
+
   menu.addEventListener('click', (e) => {
     const option = (e.target as HTMLElement | null)?.closest<HTMLElement>('.theme-option');
     const code = option?.dataset.themeCode ?? null;

@@ -1,13 +1,13 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { useTranslations } from '../../i18n/utils';
+import Layout from '../../../layouts/Layout.astro';
+import { useTranslations } from '../../../i18n/utils';
 import { getCollection, render } from 'astro:content';
 
-const lang = 'en';
+const lang = 'fr-fr';
 const t = useTranslations(lang);
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog', (e) => e.id.endsWith('/en'));
+  const posts = await getCollection('blog', (e) => e.id.endsWith('/fr-fr'));
   return posts.map((p) => ({
     params: { slug: p.id.replace(/\/[^/]+$/, '') },
     props: { post: p },
@@ -17,11 +17,11 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 
-const dateFmt = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' });
+const dateFmt = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
 ---
 
 <Layout title={post.data.title}>
-  <a href="/blog" class="back-link" data-fade-in data-fade-delay="0">{t('blog.back')}</a>
+  <a href="/fr-fr/blog" class="back-link" data-fade-in data-fade-delay="0">{t('blog.back')}</a>
   <article class="prose-mdx" data-fade-in data-fade-delay="0.05">
     <header class="mb-8">
       <h1 class="text-3xl font-bold leading-tight mb-2">{post.data.title}</h1>

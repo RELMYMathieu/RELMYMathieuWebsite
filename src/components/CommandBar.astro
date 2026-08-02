@@ -1,0 +1,210 @@
+---
+import { useTranslations, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<button
+  id="cmdbar-toggle"
+  type="button"
+  class="nav-link cmdbar-trigger cursor-pointer"
+  aria-haspopup="dialog"
+  aria-controls="cmdbar"
+  aria-label={t('cmd.open')}
+>[cmd <span class="cmdbar-trigger__key" aria-hidden="true">^K</span>]</button>
+
+<div class="cmdbar-backdrop" id="cmdbar-backdrop" aria-hidden="true"></div>
+
+<div
+  class="cmdbar"
+  id="cmdbar"
+  role="dialog"
+  aria-modal="true"
+  aria-hidden="true"
+  aria-label={t('cmd.label')}
+  tabindex="-1"
+  data-help={t('cmd.help')}
+  data-sudo={t('cmd.sudo')}
+  data-not-found={t('cmd.notFound')}
+  data-cd-not-found={t('cmd.cdNotFound')}
+  data-theme-set={t('cmd.themeSet')}
+  data-theme-unknown={t('cmd.themeUnknown')}
+>
+  <div class="cmdbar-log" id="cmdbar-log" aria-live="polite"></div>
+  <div class="cmdbar-inputline">
+    <span class="cmdbar-prompt" id="cmdbar-prompt" aria-hidden="true">relmymathieu@web:~$</span>
+    <div class="cmdbar-input-wrap">
+      <div class="cmdbar-ghost" id="cmdbar-ghost" aria-hidden="true"></div>
+      <input
+        class="cmdbar-input"
+        id="cmdbar-input"
+        type="text"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder={t('cmd.placeholder')}
+        aria-label={t('cmd.inputLabel')}
+      />
+    </div>
+  </div>
+</div>
+
+<script>
+  import '../scripts/command-bar';
+</script>
+
+<style>
+  .cmdbar-trigger {
+    font-size: 0.8125rem;
+  }
+
+  .cmdbar-trigger__key {
+    opacity: 0.55;
+    margin-left: 0.15rem;
+  }
+
+  .cmdbar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: background 0.2s ease, backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, visibility 0s linear 0.2s;
+  }
+
+  .cmdbar-backdrop.is-open {
+    background: var(--scrim);
+    backdrop-filter: blur(4px) saturate(130%);
+    -webkit-backdrop-filter: blur(4px) saturate(130%);
+    visibility: visible;
+    pointer-events: auto;
+    transition: background 0.2s ease, backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, visibility 0s linear 0s;
+  }
+
+  .cmdbar {
+    position: fixed;
+    z-index: 200;
+    top: 18vh;
+    left: 50%;
+    translate: -50% 0;
+    scale: 0.97;
+    width: min(560px, calc(100vw - 3rem));
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    background: #000000;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+    border-radius: var(--radius-lg);
+    font-size: 0.8125rem;
+    box-shadow: 4px 4px 0 #3f3f46;
+    visibility: hidden;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      opacity 0.2s cubic-bezier(0.25, 1, 0.5, 1),
+      scale 0.2s cubic-bezier(0.25, 1, 0.5, 1),
+      visibility 0s linear 0.2s;
+  }
+
+  .cmdbar.is-open {
+    visibility: visible;
+    opacity: 1;
+    scale: 1;
+    transition:
+      opacity 0.2s cubic-bezier(0.25, 1, 0.5, 1),
+      scale 0.2s cubic-bezier(0.25, 1, 0.5, 1),
+      visibility 0s linear 0s;
+  }
+
+  .cmdbar-log {
+    padding: 0.75rem 0.875rem 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: #ffffff;
+  }
+
+  .cmdbar-log:empty {
+    display: none;
+  }
+
+  :global(.cmdbar-log-line) {
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+
+  :global(.cmdbar-log-prompt) {
+    color: #22c55e;
+  }
+
+  .cmdbar-inputline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.875rem;
+    flex-shrink: 0;
+  }
+
+  .cmdbar-prompt {
+    color: #22c55e;
+    white-space: nowrap;
+  }
+
+  .cmdbar-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cmdbar-input {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    background: none;
+    border: none;
+    outline: none;
+    font: inherit;
+    color: inherit;
+  }
+
+  .cmdbar-input::placeholder {
+    color: #71717a;
+  }
+
+  .cmdbar-input::selection {
+    background: rgba(255, 255, 255, 0.18);
+    color: inherit;
+  }
+
+  .cmdbar-ghost {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    white-space: pre;
+    overflow: hidden;
+    font: inherit;
+    pointer-events: none;
+  }
+
+  :global(.cmdbar-ghost-typed) {
+    color: transparent;
+  }
+
+  :global(.cmdbar-ghost-suggest) {
+    color: #71717a;
+  }
+
+  @media (max-width: 560px) {
+    .cmdbar-trigger { display: none; }
+  }
+</style>

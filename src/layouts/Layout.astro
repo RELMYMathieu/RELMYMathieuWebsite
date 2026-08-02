@@ -5,6 +5,8 @@ import '../styles/global.css';
 import { getLangFromUrl, useTranslations, useTranslatedPath, getRawPath } from '../i18n/utils';
 import { LOCALES, getLocale } from '../i18n/config';
 import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from '../theme/config';
+import CommandBar from '../components/CommandBar.astro';
+import { BUILD_TIME } from '../utils/buildTime';
 
 const themeCodes = THEMES.map((t) => t.code);
 
@@ -32,6 +34,7 @@ const langLinks = LOCALES.map((l) => ({
 const currentLocale = getLocale(lang);
 const htmlLang = currentLocale.htmlLang;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const buildTimeFormatted = new Intl.DateTimeFormat(htmlLang, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(BUILD_TIME));
 ---
 
 <html lang={htmlLang}>
@@ -69,16 +72,21 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <noscript>
       <style>
         [data-fade-in] { opacity: 1 !important; transform: none !important; }
+        #boot-screen { display: none !important; }
       </style>
     </noscript>
   </head>
   <body class="min-h-screen flex flex-col font-mono">
+    <div id="boot-screen" aria-hidden="true" data-lines={t('boot.lines')}>
+      <div id="boot-lines"></div>
+    </div>
     <a href="#main-content" class="skip-link">{t('nav.skip')}</a>
     <nav class="nav-bar">
       <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
       <a href={translatePath('/blog')} class="nav-link">{t('nav.blog')}</a>
       <div class="ml-auto flex items-center gap-2">
         <span class="nav-clock" id="status-clock">[Paris --:--]</span>
+        <CommandBar lang={lang} />
         <div class="dropdown" id="theme-dropdown">
           <button
             id="theme-toggle"
@@ -134,6 +142,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </main>
     <footer class="status-bar">
       <span class="status-seg status-seg--muted">{t('footer.credit')}</span>
+      <span
+        class="status-seg status-seg--muted dashed-hint"
+        id="status-uptime"
+        tabindex="0"
+        data-build-time={BUILD_TIME}
+        data-uptime-label={t('footer.uptimeLabel')}
+        data-tip={t('footer.uptimeTip').replace('{time}', buildTimeFormatted)}
+      ></span>
+      <span class="status-seg status-seg--muted">{t('footer.status')}</span>
       <span class="status-seg status-seg--muted" aria-hidden="true">(｡･∀･)ﾉﾞ</span>
     </footer>
     <script>
@@ -142,11 +159,38 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       import '../scripts/lang-dropdown';
       import '../scripts/clock';
       import '../scripts/fade-in';
+      import '../scripts/uptime';
+      import '../scripts/boot';
     </script>
   </body>
 </html>
 
 <style>
+  #boot-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: #000000;
+    color: #ffffff;
+    font-size: 0.8125rem;
+    padding: 1.5rem;
+  }
+
+  [data-booted='1'] #boot-screen {
+    display: none;
+  }
+
+  #boot-lines {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    opacity: 0.85;
+  }
+
+  :global(.boot-ok) {
+    color: #22c55e;
+    font-weight: 600;
+  }
+
   .skip-link {
     position: absolute;
     top: -100%;
@@ -199,7 +243,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   .dropdown-menu {
     position: absolute;
     right: 0;
-    top: calc(100% + 4px);
+    top: calc(100% + 5px);
     background: var(--menu-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -209,24 +253,23 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     display: flex;
     flex-direction: column;
     opacity: 0;
-    transform: translateY(-4px) scale(0.96);
-    transform-origin: top right;
+    clip-path: inset(0 0 100% 0);
     pointer-events: none;
     visibility: hidden;
     transition:
       opacity 0.16s ease,
-      transform 0.18s cubic-bezier(0.05, 0.9, 0.1, 1.05),
-      visibility 0s linear 0.18s;
+      clip-path 0.24s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      visibility 0s linear 0.24s;
   }
 
   .dropdown-menu.is-open {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    clip-path: inset(0 0 0% 0);
     pointer-events: auto;
     visibility: visible;
     transition:
       opacity 0.16s ease,
-      transform 0.18s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      clip-path 0.24s cubic-bezier(0.05, 0.9, 0.1, 1.05),
       visibility 0s linear 0s;
   }
 

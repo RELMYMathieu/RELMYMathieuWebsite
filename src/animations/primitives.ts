@@ -27,6 +27,23 @@ export function fadeIn(el: Target, opts: AnimOptions = {}) {
   );
 }
 
+export function fallIn(el: Target, opts: AnimOptions = {}) {
+  if (prefersReducedMotion()) {
+    (el as HTMLElement).style.opacity = '1';
+    (el as HTMLElement).style.transform = 'none';
+    return;
+  }
+  return animate(
+    el,
+    { opacity: [0, 1], transform: ['translateY(-90px)', 'translateY(0)'] },
+    {
+      duration: opts.duration ?? 0.9,
+      delay: opts.delay ?? 0,
+      ease: (opts.ease ?? EASE.bouncy) as number[],
+    },
+  );
+}
+
 export function pop(el: Target, opts: AnimOptions = {}) {
   if (prefersReducedMotion()) return;
   return animate(

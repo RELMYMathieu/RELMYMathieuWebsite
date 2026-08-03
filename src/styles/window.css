@@ -42,6 +42,7 @@
   border-radius: var(--console-radius, var(--radius-lg));
   font-size: 0.8125rem;
   box-shadow: var(--console-shadow, 4px 4px 0 var(--border));
+  /* blur(0px), not none, otherwise swapping themes on an open window drops the blur and it goes see-thru. */
   backdrop-filter: var(--console-backdrop-filter, blur(0px));
   -webkit-backdrop-filter: var(--console-backdrop-filter, blur(0px));
   user-select: none;

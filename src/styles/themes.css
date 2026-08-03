@@ -43,7 +43,7 @@
   --console-prompt: #22c55e;
   --console-radius: var(--radius-lg);
   --console-shadow: 4px 4px 0 #3f3f46;
-  --console-backdrop-filter: none;
+  --console-backdrop-filter: blur(0px);
 }
 
 [data-theme='rem'] {
@@ -141,5 +141,5 @@
   --console-prompt: oklch(0.410 0.185 5);
   --console-radius: 10px;
   --console-shadow: 0 14px 30px -12px oklch(0.230 0.028 315 / 0.32);
-  --console-backdrop-filter: none;
+  --console-backdrop-filter: blur(0px);
 }

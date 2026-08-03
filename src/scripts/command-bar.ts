@@ -9,6 +9,7 @@ import {
   getCachedNowPlaying,
   needsReauth,
   nowPlayingEnabled,
+  type PlaybackState,
 } from './now-playing';
 
 interface LogEntry {
@@ -371,8 +372,16 @@ function runFetchCommand(): void {
   print(lines.join('\n'));
 }
 
+const HEADING_FOR: Record<PlaybackState, (s: NpStrings) => string> = {
+  playing: (s) => s.heading,
+  paused: (s) => s.paused,
+  last: (s) => s.headingLast,
+  idle: (s) => s.headingLast,
+};
+
 interface NpStrings {
   heading: string;
+  paused: string;
   headingLast: string;
   track: string;
   artist: string;
@@ -411,7 +420,7 @@ async function runNpCommand(strings: NpStrings): Promise<void> {
 
   const pad = Math.max(...rows.map(([label]) => label.length));
   const lines = [
-    `♪ ${data.isPlaying ? strings.heading : strings.headingLast}`,
+    `♪ ${HEADING_FOR[data.state](strings)}`,
     '-------------------',
     ...rows.map(([label, value]) => `${label.padEnd(pad)} : ${value}`),
   ];
@@ -466,6 +475,7 @@ function runCommand(raw: string): void {
 
   const npStrings: NpStrings = {
     heading: panel?.dataset.npHeading ?? 'now playing',
+    paused: panel?.dataset.npPaused ?? 'paused',
     headingLast: panel?.dataset.npHeadingLast ?? 'last played',
     track: panel?.dataset.npTrack ?? 'track',
     artist: panel?.dataset.npArtist ?? 'artist',

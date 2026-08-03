@@ -5,8 +5,10 @@ interface Env {
   ALLOWED_ORIGINS?: string;
 }
 
+type PlaybackState = 'playing' | 'paused' | 'last' | 'idle';
+
 interface NowPlayingPayload {
-  isPlaying: boolean;
+  state: PlaybackState;
   title?: string;
   artist?: string;
   album?: string;
@@ -26,7 +28,7 @@ interface SpotifyTrack {
 }
 
 const DEFAULT_ORIGINS = ['https://relmymathieu.me', 'http://localhost:4321'];
-const CACHE_SECONDS = 15;
+const CACHE_SECONDS = 5;
 
 let token: { value: string; expiresAt: number } | null = null;
 let refreshToken: string | null = null;
@@ -97,9 +99,9 @@ async function getAccessToken(env: Env): Promise<string> {
   return token.value;
 }
 
-function trackPayload(track: SpotifyTrack, isPlaying: boolean): NowPlayingPayload {
+function trackPayload(track: SpotifyTrack, state: PlaybackState): NowPlayingPayload {
   return {
-    isPlaying,
+    state,
     title: track.name,
     artist: track.artists?.map((a) => a.name).filter(Boolean).join(', ') || undefined,
     album: track.album?.name,
@@ -124,9 +126,11 @@ async function currentlyPlaying(accessToken: string): Promise<NowPlayingPayload 
   };
 
   if (!data.item || data.currently_playing_type !== 'track') return null;
-  if (!data.is_playing) return null;
 
-  return { ...trackPayload(data.item, true), progressMs: data.progress_ms };
+  return {
+    ...trackPayload(data.item, data.is_playing ? 'playing' : 'paused'),
+    progressMs: data.progress_ms,
+  };
 }
 
 async function recentlyPlayed(accessToken: string): Promise<NowPlayingPayload | null> {
@@ -142,7 +146,7 @@ async function recentlyPlayed(accessToken: string): Promise<NowPlayingPayload | 
   const entry = data.items?.[0];
   if (!entry?.track) return null;
 
-  return { ...trackPayload(entry.track, false), playedAt: entry.played_at };
+  return { ...trackPayload(entry.track, 'last'), playedAt: entry.played_at };
 }
 
 export default {
@@ -168,7 +172,7 @@ export default {
         const accessToken = await getAccessToken(env);
         const payload =
           (await currentlyPlaying(accessToken)) ?? (await recentlyPlayed(accessToken));
-        payloadCache = { at: Date.now(), payload: payload ?? { isPlaying: false } };
+        payloadCache = { at: Date.now(), payload: payload ?? { state: 'idle' } };
       }
 
       const entry = payloadCache!;

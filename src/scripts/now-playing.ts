@@ -1,8 +1,15 @@
 import { onPageReady, prefersReducedMotion } from '../animations';
-import { NOW_PLAYING_ENDPOINT, NOW_PLAYING_POLL_MS } from '../config/services';
+import {
+  NOW_PLAYING_ENDPOINT,
+  NOW_PLAYING_IDLE_POLL_MS,
+  NOW_PLAYING_OVERRUN_MS,
+  NOW_PLAYING_POLL_MS,
+} from '../config/services';
+
+export type PlaybackState = 'playing' | 'paused' | 'last' | 'idle';
 
 export interface NowPlaying {
-  isPlaying: boolean;
+  state: PlaybackState;
   title?: string;
   artist?: string;
   album?: string;
@@ -13,6 +20,8 @@ export interface NowPlaying {
   ageMs?: number;
 }
 
+const STATES: readonly string[] = ['playing', 'paused', 'last', 'idle'];
+
 let cached: NowPlaying | null = null;
 let fetchedAt = 0;
 let interval: number | null = null;
@@ -20,6 +29,7 @@ let earlyRefresh: number | null = null;
 let pending: Promise<NowPlaying | null> | null = null;
 let visibilityBound = false;
 let reauthRequired = false;
+let pollEvery = 0;
 
 export const nowPlayingEnabled = NOW_PLAYING_ENDPOINT !== '';
 
@@ -39,16 +49,24 @@ export function getCachedNowPlaying(): NowPlaying | null {
 }
 
 export function elapsedMs(data: NowPlaying): number | null {
-  if (!data.isPlaying || typeof data.progressMs !== 'number') return null;
+  if (typeof data.progressMs !== 'number') return null;
+  if (data.state === 'paused') return data.progressMs;
+  if (data.state !== 'playing') return null;
+
   const staleness = (data.ageMs ?? 0) + (Date.now() - fetchedAt);
   const advanced = data.progressMs + staleness;
   return data.durationMs ? Math.min(advanced, data.durationMs) : advanced;
 }
 
 function remainingMs(data: NowPlaying): number | null {
+  if (data.state !== 'playing') return null;
   const elapsed = elapsedMs(data);
   if (elapsed === null || !data.durationMs) return null;
   return Math.max(0, data.durationMs - elapsed);
+}
+
+function hasOverrun(data: NowPlaying | null): boolean {
+  return data !== null && data.state === 'playing' && remainingMs(data) === 0;
 }
 
 export async function fetchNowPlaying(): Promise<NowPlaying | null> {
@@ -69,7 +87,7 @@ export async function fetchNowPlaying(): Promise<NowPlaying | null> {
       }
 
       const json = (await res.json()) as NowPlaying;
-      if (typeof json?.isPlaying !== 'boolean') return null;
+      if (!STATES.includes(json?.state)) return null;
       cached = json;
       fetchedAt = Date.now();
       return json;
@@ -118,12 +136,15 @@ function render(el: HTMLElement): void {
     return;
   }
 
-  const playing = data.isPlaying;
-  el.classList.toggle('is-last', !playing);
+  const playing = data.state === 'playing';
+  el.classList.toggle('is-playing', playing);
+  el.classList.toggle('is-paused', data.state === 'paused');
+  el.classList.toggle('is-last', data.state === 'last');
   el.hidden = false;
   menu.replaceChildren();
 
-  if (!playing) line(menu, 'np-status', el.dataset.npLastPrefix ?? 'last played');
+  if (data.state === 'paused') line(menu, 'np-status', el.dataset.npPaused ?? 'paused');
+  if (data.state === 'last') line(menu, 'np-status', el.dataset.npLastPrefix ?? 'last played');
 
   const title = document.createElement(data.url ? 'a' : 'span');
   title.className = 'np-title';
@@ -145,7 +166,7 @@ function render(el: HTMLElement): void {
   track.className = 'np-progress';
   const bar = document.createElement('span');
   bar.className = 'np-bar';
-  if (prefersReducedMotion()) {
+  if (!playing || prefersReducedMotion()) {
     bar.style.transform = `scaleX(${elapsed / data.durationMs})`;
   } else {
     bar.style.animationDuration = `${data.durationMs}ms`;
@@ -163,50 +184,84 @@ function render(el: HTMLElement): void {
 function scheduleEarlyRefresh(): void {
   if (earlyRefresh !== null) clearTimeout(earlyRefresh);
   earlyRefresh = null;
+  if (cached?.state !== 'playing') return;
 
-  const data = cached;
-  if (!data?.isPlaying) return;
-  const remaining = remainingMs(data);
+  if (hasOverrun(cached)) {
+    earlyRefresh = window.setTimeout(refresh, NOW_PLAYING_OVERRUN_MS);
+    return;
+  }
+
+  const remaining = remainingMs(cached);
   if (remaining === null || remaining >= NOW_PLAYING_POLL_MS) return;
-
-  earlyRefresh = window.setTimeout(refresh, Math.max(remaining + 1500, 5000));
+  earlyRefresh = window.setTimeout(refresh, remaining + 1000);
 }
 
 function refresh(): void {
   void fetchNowPlaying().then(() => {
     const el = segment();
     if (el?.isConnected) render(el);
+    startPolling();
     scheduleEarlyRefresh();
   });
 }
 
 function startPolling(): void {
+  const next = cached?.state === 'playing' ? NOW_PLAYING_POLL_MS : NOW_PLAYING_IDLE_POLL_MS;
+  if (interval !== null && pollEvery === next) return;
+
   if (interval !== null) clearInterval(interval);
+  pollEvery = next;
   interval = window.setInterval(() => {
     if (document.visibilityState !== 'visible') return;
     refresh();
-  }, NOW_PLAYING_POLL_MS);
+  }, next);
 }
 
-function bindMenuTicker(el: HTMLElement): void {
+function bindMenu(el: HTMLElement): void {
   if (el.dataset.bound === '1') return;
   el.dataset.bound = '1';
 
   let ticker: number | null = null;
 
+  const tick = () => {
+    const menu = el.querySelector<HTMLElement>('.nav-np__menu');
+    if (menu && cached) renderTime(menu, cached);
+  };
+
   const start = () => {
+    tick();
     if (ticker !== null) return;
-    ticker = window.setInterval(() => {
-      const menu = el.querySelector<HTMLElement>('.nav-np__menu');
-      if (menu && cached) renderTime(menu, cached);
-    }, 1000);
+    ticker = window.setInterval(tick, 1000);
   };
 
   const stop = () => {
+    if (el.classList.contains('is-pinned')) return;
     if (ticker === null) return;
     clearInterval(ticker);
     ticker = null;
   };
+
+  const trigger = el.querySelector<HTMLElement>('.nav-np__trigger');
+  trigger?.addEventListener('click', () => {
+    const pinned = el.classList.toggle('is-pinned');
+    trigger.setAttribute('aria-expanded', String(pinned));
+    pinned ? start() : stop();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!el.classList.contains('is-pinned')) return;
+    if (el.contains(e.target as Node)) return;
+    el.classList.remove('is-pinned');
+    trigger?.setAttribute('aria-expanded', 'false');
+    stop();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !el.classList.contains('is-pinned')) return;
+    el.classList.remove('is-pinned');
+    trigger?.setAttribute('aria-expanded', 'false');
+    stop();
+  });
 
   el.addEventListener('pointerenter', start);
   el.addEventListener('pointerleave', stop);
@@ -226,7 +281,7 @@ function initNowPlaying(): void {
   if (cached) render(el);
   else el.hidden = true;
 
-  bindMenuTicker(el);
+  bindMenu(el);
   refresh();
   startPolling();
 

@@ -107,11 +107,18 @@ const weatherLabels = Object.fromEntries(
       <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
       <a href={translatePath('/blog')} class="nav-link">{t('nav.blog')}</a>
       <div class="ml-auto flex items-center gap-2">
-        <div class="nav-np" id="now-playing" data-np-last-prefix={t('np.lastPrefix')} hidden>
+        <div
+          class="nav-np"
+          id="now-playing"
+          data-np-last-prefix={t('np.lastPrefix')}
+          data-np-paused={t('np.paused')}
+          hidden
+        >
           <button
             class="nav-np__trigger"
             type="button"
             aria-label={t('np.label')}
+            aria-expanded="false"
             aria-describedby="np-menu"
           >[<span class="nav-np__glyph" aria-hidden="true">♪</span>]</button>
           <div class="nav-np__menu" id="np-menu" role="tooltip"></div>
@@ -403,7 +410,7 @@ const weatherLabels = Object.fromEntries(
     color: var(--text-subtle);
     letter-spacing: 0.03em;
     padding: 0.5rem 0.35rem;
-    cursor: default;
+    cursor: pointer;
   }
 
   .nav-np__trigger:focus-visible {
@@ -416,13 +423,24 @@ const weatherLabels = Object.fromEntries(
   }
 
   /* TODO : Could improve the looks to show it more lively, like "HEY THERES SOMETHING HOVERABLE THERE" */
-  .nav-np:not(.is-last) .nav-np__glyph {
+  .nav-np.is-playing .nav-np__glyph {
     animation: np-pulse 2.4s ease-in-out infinite;
+  }
+
+  .nav-np.is-pinned .nav-np__trigger {
+    color: var(--text-main);
   }
 
   @keyframes np-pulse {
     0%, 100% { opacity: 0.55; }
     50%      { opacity: 1; }
+  }
+
+  .nav-np::after {
+    content: '';
+    position: absolute;
+    inset: 100% 0 auto 0;
+    height: 7px;
   }
 
   .nav-np__menu {
@@ -452,7 +470,8 @@ const weatherLabels = Object.fromEntries(
   }
 
   .nav-np:hover .nav-np__menu,
-  .nav-np:focus-within .nav-np__menu {
+  .nav-np:focus-within .nav-np__menu,
+  .nav-np.is-pinned .nav-np__menu {
     opacity: 1;
     clip-path: inset(0 0 0% 0);
     pointer-events: auto;
@@ -523,7 +542,7 @@ const weatherLabels = Object.fromEntries(
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .nav-np:not(.is-last) .nav-np__glyph { animation: none; }
+    .nav-np.is-playing .nav-np__glyph { animation: none; }
   }
 
   @media (max-width: 820px) {

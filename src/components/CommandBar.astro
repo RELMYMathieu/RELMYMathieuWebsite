@@ -43,6 +43,15 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
   data-wife={t('cmd.wife')}
   data-theme-set={t('cmd.themeSet')}
   data-theme-unknown={t('cmd.themeUnknown')}
+  data-np-heading={t('cmd.npHeading')}
+  data-np-heading-last={t('cmd.npHeadingLast')}
+  data-np-track={t('cmd.npTrack')}
+  data-np-artist={t('cmd.npArtist')}
+  data-np-album={t('cmd.npAlbum')}
+  data-np-none={t('cmd.npNone')}
+  data-np-off={t('cmd.npOff')}
+  data-np-error={t('cmd.npError')}
+  data-np-reauth={t('cmd.npReauth')}
   data-blog-slugs={blogSlugs.join(',')}
 >
   <div class="cmdbar-log" id="cmdbar-log" aria-live="polite"></div>

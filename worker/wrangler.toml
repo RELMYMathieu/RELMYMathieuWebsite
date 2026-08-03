@@ -1,0 +1,9 @@
+name = "relmy-now-playing"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+workers_dev = true
+preview_urls = false
+
+[vars]
+ALLOWED_ORIGINS = "https://relmymathieu.me,http://localhost:4321"

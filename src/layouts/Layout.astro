@@ -7,6 +7,8 @@ import { LOCALES, getLocale } from '../i18n/config';
 import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from '../theme/config';
 import CommandBar from '../components/CommandBar.astro';
 import { BUILD_TIME } from '../utils/buildTime';
+import { LOCATION } from '../config/location';
+import { WEATHER_BUCKETS } from '../config/weather';
 
 const themeCodes = THEMES.map((t) => t.code);
 
@@ -40,6 +42,10 @@ const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
   timeStyle: 'short',
   timeZone: 'UTC',
 }).format(new Date(BUILD_TIME))} (UTC)`;
+
+const weatherLabels = Object.fromEntries(
+  WEATHER_BUCKETS.map((bucket) => [bucket, t(`weather.${bucket}`)]),
+);
 ---
 
 <html lang={htmlLang}>
@@ -60,6 +66,12 @@ const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonical} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`Relmy Mathieu - ${t('blog.title')}`}
+      href={translatePath('/rss.xml')}
+    />
 
     <title>{title} - Relmy Mathieu</title>
     <meta name="description" content={description} />
@@ -95,7 +107,20 @@ const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
       <a href={translatePath('/')} class="nav-link">{t('nav.home')}</a>
       <a href={translatePath('/blog')} class="nav-link">{t('nav.blog')}</a>
       <div class="ml-auto flex items-center gap-2">
-        <span class="nav-clock" id="status-clock">[Paris --:--]</span>
+        <div class="nav-np" id="now-playing" data-np-last-prefix={t('np.lastPrefix')} hidden>
+          <button
+            class="nav-np__trigger"
+            type="button"
+            aria-label={t('np.label')}
+            aria-describedby="np-menu"
+          >[<span class="nav-np__glyph" aria-hidden="true">♪</span>]</button>
+          <div class="nav-np__menu" id="np-menu" role="tooltip"></div>
+        </div>
+        <span
+          class="nav-clock"
+          id="status-clock"
+          data-weather-labels={JSON.stringify(weatherLabels)}
+        >[{LOCATION.city} --:--]</span>
         <CommandBar lang={lang} />
         <div class="dropdown" id="theme-dropdown">
           <button
@@ -172,6 +197,7 @@ const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
       import '../scripts/uptime';
       import '../scripts/boot';
       import '../scripts/kaomoji';
+      import '../scripts/now-playing';
     </script>
   </body>
 </html>
@@ -362,6 +388,146 @@ const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
     letter-spacing: 0.03em;
     padding: 0 0.35rem;
     white-space: nowrap;
+  }
+
+  .nav-np {
+    position: relative;
+  }
+
+  .nav-np[hidden] {
+    display: none;
+  }
+
+  .nav-np__trigger {
+    font-size: 0.75rem;
+    color: var(--text-subtle);
+    letter-spacing: 0.03em;
+    padding: 0.5rem 0.35rem;
+    cursor: default;
+  }
+
+  .nav-np__trigger:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: 2px;
+  }
+
+  .nav-np__glyph {
+    display: inline-block;
+  }
+
+  /* TODO : Could improve the looks to show it more lively, like "HEY THERES SOMETHING HOVERABLE THERE" */
+  .nav-np:not(.is-last) .nav-np__glyph {
+    animation: np-pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes np-pulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1; }
+  }
+
+  .nav-np__menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    width: max-content;
+    max-width: min(17rem, 70vw);
+    padding: 0.55rem 0.7rem;
+    background: var(--menu-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.75rem;
+    text-align: left;
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    pointer-events: none;
+    visibility: hidden;
+    transition:
+      opacity 0.16s ease,
+      clip-path 0.24s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      visibility 0s linear 0.24s;
+  }
+
+  .nav-np:hover .nav-np__menu,
+  .nav-np:focus-within .nav-np__menu {
+    opacity: 1;
+    clip-path: inset(0 0 0% 0);
+    pointer-events: auto;
+    visibility: visible;
+    transition:
+      opacity 0.16s ease,
+      clip-path 0.24s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      visibility 0s linear 0s;
+  }
+
+  :global(.np-status) {
+    color: var(--text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.65rem;
+  }
+
+  :global(.np-title) {
+    font-weight: 600;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+  }
+
+  :global(a.np-title:hover) {
+    text-decoration: underline;
+  }
+
+  :global(.np-artist) {
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  :global(.np-album) {
+    color: var(--text-subtle);
+    font-size: 0.7rem;
+    overflow-wrap: anywhere;
+  }
+
+  :global(.np-progress) {
+    display: block;
+    height: 2px;
+    margin-top: 0.35rem;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  :global(.np-bar) {
+    display: block;
+    height: 100%;
+    background: var(--accent, currentColor);
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation-name: np-progress;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+  }
+
+  @keyframes np-progress {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  :global(.np-time) {
+    color: var(--text-subtle);
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-np:not(.is-last) .nav-np__glyph { animation: none; }
+  }
+
+  @media (max-width: 820px) {
+    .nav-np { display: none; }
   }
 
   @media (max-width: 480px) {

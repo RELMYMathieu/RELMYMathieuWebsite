@@ -2,6 +2,14 @@ import { navigate } from 'astro:transitions/client';
 import { onPageReady } from '../animations';
 import { setTheme } from './theme';
 import { isTheme, THEMES } from '../theme/config';
+import {
+  elapsedMs,
+  fetchNowPlaying,
+  formatClock,
+  getCachedNowPlaying,
+  needsReauth,
+  nowPlayingEnabled,
+} from './now-playing';
 
 interface LogEntry {
   text: string;
@@ -18,7 +26,7 @@ let keepOpenAcrossNav = false;
 
 const WHOAMI = 'relmymathieu';
 
-const COMMANDS = ['help', 'cd', 'dir', 'cat', 'pwd', 'echo', 'fetch', 'theme', 'en', 'fr', 'whoami', 'clear', 'exit'];
+const COMMANDS = ['help', 'cd', 'dir', 'cat', 'pwd', 'echo', 'fetch', 'np', 'theme', 'en', 'fr', 'whoami', 'clear', 'exit'];
 const WIFE_URL = 'https://www.youtube.com/@zythecreator/videos';
 
 const ARG_COMPLETIONS: Record<string, () => string[]> = {
@@ -340,21 +348,80 @@ function runFetchCommand(): void {
   const info = collectSystemInfo();
   const theme = document.documentElement.dataset.theme ?? 'slate';
   const uptime = document.getElementById('status-uptime')?.textContent?.trim() || 'unknown';
-  print(
-    [
-      `${WHOAMI}@web`,
-      '-------------------',
-      `os      : ${info.os}`,
-      `browser : ${info.browser}`,
-      `cpu     : ${info.cpu}`,
-      `gpu     : ${info.gpu}`,
-      `memory  : ${info.memory}`,
-      `screen  : ${info.screen}`,
-      `lang    : ${info.lang}`,
-      `theme   : ${theme}`,
-      `uptime  : ${uptime}`,
-    ].join('\n'),
-  );
+  const np = getCachedNowPlaying();
+
+  const lines = [
+    `${WHOAMI}@web`,
+    '-------------------',
+    `os      : ${info.os}`,
+    `browser : ${info.browser}`,
+    `cpu     : ${info.cpu}`,
+    `gpu     : ${info.gpu}`,
+    `memory  : ${info.memory}`,
+    `screen  : ${info.screen}`,
+    `lang    : ${info.lang}`,
+    `theme   : ${theme}`,
+    `uptime  : ${uptime}`,
+  ];
+
+  if (np?.title) {
+    lines.push(`playing : ${np.artist ? `${np.artist} - ` : ''}${np.title}`);
+  }
+
+  print(lines.join('\n'));
+}
+
+interface NpStrings {
+  heading: string;
+  headingLast: string;
+  track: string;
+  artist: string;
+  album: string;
+  none: string;
+  off: string;
+  error: string;
+  reauth: string;
+}
+
+function progressBar(progressMs: number, durationMs: number): string {
+  const CELLS = 10;
+  const filled = Math.min(CELLS, Math.max(0, Math.round((progressMs / durationMs) * CELLS)));
+  return `[${'#'.repeat(filled)}${'-'.repeat(CELLS - filled)}] ${formatClock(progressMs)} / ${formatClock(durationMs)}`;
+}
+
+async function runNpCommand(strings: NpStrings): Promise<void> {
+  if (!nowPlayingEnabled) {
+    print(strings.off);
+    return;
+  }
+
+  const data = await fetchNowPlaying();
+  if (!data) {
+    print(needsReauth() ? strings.reauth : strings.error);
+    return;
+  }
+  if (!data.title) {
+    print(strings.none);
+    return;
+  }
+
+  const rows: [string, string][] = [[strings.track, data.title]];
+  if (data.artist) rows.push([strings.artist, data.artist]);
+  if (data.album) rows.push([strings.album, data.album]);
+
+  const pad = Math.max(...rows.map(([label]) => label.length));
+  const lines = [
+    `♪ ${data.isPlaying ? strings.heading : strings.headingLast}`,
+    '-------------------',
+    ...rows.map(([label, value]) => `${label.padEnd(pad)} : ${value}`),
+  ];
+
+  const elapsed = elapsedMs(data);
+  if (elapsed !== null && data.durationMs) {
+    lines.push(progressBar(elapsed, data.durationMs));
+  }
+
+  print(lines.join('\n'));
 }
 
 function triggerFakeDeletion(message: string): void {
@@ -395,6 +462,18 @@ function runCommand(raw: string): void {
     wife: panel?.dataset.wife ?? '',
     themeSet: panel?.dataset.themeSet ?? '',
     themeUnknown: panel?.dataset.themeUnknown ?? '',
+  };
+
+  const npStrings: NpStrings = {
+    heading: panel?.dataset.npHeading ?? 'now playing',
+    headingLast: panel?.dataset.npHeadingLast ?? 'last played',
+    track: panel?.dataset.npTrack ?? 'track',
+    artist: panel?.dataset.npArtist ?? 'artist',
+    album: panel?.dataset.npAlbum ?? 'album',
+    none: panel?.dataset.npNone ?? '',
+    off: panel?.dataset.npOff ?? '',
+    error: panel?.dataset.npError ?? '',
+    reauth: panel?.dataset.npReauth ?? '',
   };
 
   const [cmd, ...rest] = trimmed.split(/\s+/);
@@ -451,6 +530,10 @@ function runCommand(raw: string): void {
       break;
     case 'fetch':
       runFetchCommand();
+      break;
+    case 'np':
+    case 'spotify':
+      void runNpCommand(npStrings);
       break;
     case 'en':
     case 'fr': {

@@ -1,0 +1,59 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Section from '../components/Section.astro';
+import { useTranslations } from '../i18n/utils';
+import { LOCALES } from '../i18n/config';
+
+const t = useTranslations('en');
+
+const strings = Object.fromEntries(
+  LOCALES.map((l) => {
+    const tl = useTranslations(l.code);
+    return [l.code, { error: tl('notFound.error'), hint: tl('notFound.hint'), home: tl('notFound.home') }];
+  }),
+);
+---
+
+<Layout title={t('notFound.title')}>
+  <Section delay={0}>
+    <p class="prompt-line">relmymathieu@web:~$ cd .</p>
+    <h1 class="text-4xl font-bold mb-3">404</h1>
+    <p class="text-sm leading-relaxed" id="nf-error" data-strings={JSON.stringify(strings)}>
+      {t('notFound.error').replace('{path}', '/')}
+    </p>
+    <p class="text-sm text-subtle mt-2" id="nf-hint">{t('notFound.hint')}</p>
+    <p class="text-sm mt-6">
+      <a href="/" id="nf-home" class="dashed-hint" data-tip="take me home">{t('notFound.home')}</a>
+    </p>
+    <p class="text-2xl mt-8" id="nf-face" aria-hidden="true">(・_・?)</p>
+  </Section>
+</Layout>
+
+<script>
+  interface NotFoundStrings {
+    error: string;
+    hint: string;
+    home: string;
+  }
+
+  const errorEl = document.getElementById('nf-error');
+  const hintEl = document.getElementById('nf-hint');
+  const homeEl = document.getElementById('nf-home') as HTMLAnchorElement | null;
+
+  if (errorEl) {
+    const isFr = location.pathname.startsWith('/fr-fr');
+    const lang = isFr ? 'fr-fr' : 'en';
+    const all = JSON.parse(errorEl.dataset.strings ?? '{}') as Record<string, NotFoundStrings>;
+    const s = all[lang];
+
+    if (s) {
+      errorEl.textContent = s.error.replace('{path}', location.pathname);
+      if (hintEl) hintEl.textContent = s.hint;
+      if (homeEl) {
+        homeEl.textContent = s.home;
+        homeEl.href = isFr ? '/fr-fr' : '/';
+      }
+    }
+    document.documentElement.lang = isFr ? 'fr-FR' : 'en';
+  }
+</script>

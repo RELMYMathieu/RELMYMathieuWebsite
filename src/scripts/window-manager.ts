@@ -135,7 +135,7 @@ function applyState(win: HTMLElement, next: WindowState) {
   }
 
   const to = win.getBoundingClientRect();
-  const ease = (next === 'minimized' ? EASE.snappy : EASE.bouncy) as unknown as number[];
+  const ease = next === 'minimized' ? EASE.snappy : EASE.bouncy;
   const duration = next === 'minimized' ? 0.28 : 0.36;
 
   const result = morph(win, from, to, { duration, ease, counterScale: [titlebar] });

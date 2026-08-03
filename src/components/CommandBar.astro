@@ -1,4 +1,5 @@
 ---
+import { getCollection } from 'astro:content';
 import { useTranslations, type Lang } from '../i18n/utils';
 
 interface Props {
@@ -7,6 +8,9 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
+
+const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`)))
+  .map((p) => p.id.replace(/\/[^/]+$/, ''));
 ---
 
 <button
@@ -34,6 +38,7 @@ const t = useTranslations(lang);
   data-cd-not-found={t('cmd.cdNotFound')}
   data-theme-set={t('cmd.themeSet')}
   data-theme-unknown={t('cmd.themeUnknown')}
+  data-blog-slugs={blogSlugs.join(',')}
 >
   <div class="cmdbar-log" id="cmdbar-log" aria-live="polite"></div>
   <div class="cmdbar-inputline">
@@ -100,18 +105,23 @@ const t = useTranslations(lang);
     max-height: 60vh;
     display: flex;
     flex-direction: column;
-    background: #000000;
-    color: #ffffff;
-    border: 1px solid #3f3f46;
-    border-radius: var(--radius-lg);
+    background: var(--console-bg);
+    color: var(--console-fg);
+    border: 1px solid var(--console-border);
+    border-radius: var(--console-radius, var(--radius-lg));
     font-size: 0.8125rem;
-    box-shadow: 4px 4px 0 #3f3f46;
+    box-shadow: var(--console-shadow, 4px 4px 0 var(--console-border));
+    backdrop-filter: var(--console-backdrop-filter, none);
+    -webkit-backdrop-filter: var(--console-backdrop-filter, none);
     visibility: hidden;
     opacity: 0;
     overflow: hidden;
     transition:
       opacity 0.2s cubic-bezier(0.25, 1, 0.5, 1),
       scale 0.2s cubic-bezier(0.25, 1, 0.5, 1),
+      background 0.28s ease,
+      border-color 0.28s ease,
+      box-shadow 0.28s ease,
       visibility 0s linear 0.2s;
   }
 
@@ -131,7 +141,7 @@ const t = useTranslations(lang);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    color: #ffffff;
+    color: var(--console-fg);
   }
 
   .cmdbar-log:empty {
@@ -144,7 +154,7 @@ const t = useTranslations(lang);
   }
 
   :global(.cmdbar-log-prompt) {
-    color: #22c55e;
+    color: var(--console-prompt);
   }
 
   .cmdbar-inputline {
@@ -156,7 +166,7 @@ const t = useTranslations(lang);
   }
 
   .cmdbar-prompt {
-    color: #22c55e;
+    color: var(--console-prompt);
     white-space: nowrap;
   }
 

@@ -39,9 +39,11 @@
   background: var(--ww-bg);
   color: var(--ww-fg);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--console-radius, var(--radius-lg));
   font-size: 0.8125rem;
-  box-shadow: 4px 4px 0 var(--border);
+  box-shadow: var(--console-shadow, 4px 4px 0 var(--border));
+  backdrop-filter: var(--console-backdrop-filter, none);
+  -webkit-backdrop-filter: var(--console-backdrop-filter, none);
   user-select: none;
   visibility: hidden;
   opacity: 0;

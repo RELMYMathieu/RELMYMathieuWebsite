@@ -20,10 +20,19 @@ const WHOAMI = 'relmymathieu';
 
 const COMMANDS = ['help', 'cd', 'dir', 'theme', 'en', 'fr', 'whoami', 'clear', 'exit'];
 
-const ARG_COMPLETIONS: Record<string, string[]> = {
-  theme: THEMES.map((t) => t.code),
-  cd: ['~', '~/blog', 'blog', '..'],
+const ARG_COMPLETIONS: Record<string, () => string[]> = {
+  theme: () => THEMES.map((t) => t.code),
+  cd: () => {
+    const slugs = getBlogSlugs();
+    const relative = whereAmI() === 'blog' ? slugs : slugs.map((s) => `blog/${s}`);
+    return ['~', '~/blog', 'blog', '..', ...relative];
+  },
 };
+
+function getBlogSlugs(): string[] {
+  const { panel } = els();
+  return (panel?.dataset.blogSlugs ?? '').split(',').filter(Boolean);
+}
 
 function completionFor(value: string): string | null {
   const spaceIdx = value.indexOf(' ');
@@ -39,7 +48,7 @@ function completionFor(value: string): string | null {
   const cmd = value.slice(0, spaceIdx).toLowerCase();
   const argStart = spaceIdx + 1;
   const argPart = value.slice(argStart);
-  const options = ARG_COMPLETIONS[cmd];
+  const options = ARG_COMPLETIONS[cmd]?.();
   if (!options || !argPart || /\s/.test(argPart)) return null;
 
   const lowerArg = argPart.toLowerCase();
@@ -49,12 +58,19 @@ function completionFor(value: string): string | null {
   return match.length > argPart.length ? value.slice(0, argStart) + match : null;
 }
 
-function resolveCdTarget(argRaw: string): 'home' | 'blog' | null {
+type CdTarget = { kind: 'home' } | { kind: 'blog' } | { kind: 'post'; slug: string };
+
+function resolveCdTarget(argRaw: string, slugs: string[], inBlog: boolean): CdTarget | null {
   const trimmed = argRaw.trim();
-  if (!trimmed || trimmed === '~' || trimmed === '/' || trimmed === '..' || trimmed === '../') return 'home';
+  if (!trimmed || trimmed === '~' || trimmed === '/' || trimmed === '..' || trimmed === '../') return { kind: 'home' };
   const stripped = trimmed.replace(/^~\//, '').replace(/\/+$/, '');
-  if (stripped === '') return 'home';
-  if (stripped === 'blog') return 'blog';
+  if (stripped === '') return { kind: 'home' };
+  if (stripped === 'blog') return { kind: 'blog' };
+  if (stripped.startsWith('blog/')) {
+    const slug = stripped.slice('blog/'.length);
+    return slugs.includes(slug) ? { kind: 'post', slug } : null;
+  }
+  if (inBlog && slugs.includes(stripped)) return { kind: 'post', slug: stripped };
   return null;
 }
 
@@ -199,6 +215,10 @@ function goBlog(): void {
   navigate(currentLang() === 'fr-fr' ? '/fr-fr/blog' : '/blog');
 }
 
+function goPost(slug: string): void {
+  navigate(currentLang() === 'fr-fr' ? `/fr-fr/blog/${slug}` : `/blog/${slug}`);
+}
+
 function runCommand(raw: string): void {
   const trimmed = raw.trim();
   if (!trimmed) return;
@@ -237,19 +257,33 @@ function runCommand(raw: string): void {
       print(WHOAMI);
       break;
     case 'cd': {
-      const target = resolveCdTarget(arg);
-      if (target === 'home') goHome();
-      else if (target === 'blog') goBlog();
+      const target = resolveCdTarget(arg, getBlogSlugs(), whereAmI() === 'blog');
+      if (target?.kind === 'home') goHome();
+      else if (target?.kind === 'blog') goBlog();
+      else if (target?.kind === 'post') goPost(target.slug);
       else print(strings.cdNotFound.replace('{path}', arg || '~'));
       break;
     }
-    case 'dir':
-      print('~/\n~/blog');
+    case 'dir': {
+      const raw = rawPath();
+      let entries: string[];
+      if (raw === '/') {
+        entries = ['.', '..', 'blog'];
+      } else if (raw === '/blog' || raw.startsWith('/blog/')) {
+        entries = ['.', '..', ...getBlogSlugs()];
+      } else {
+        entries = ['.', '..'];
+      }
+      print(entries.join('\n'));
       break;
+    }
     case 'en':
-    case 'fr':
+    case 'fr': {
+      const { input: langInput } = els();
+      if (langInput) langInput.disabled = true;
       navigate(langPath(cmd.toLowerCase() === 'fr' ? 'fr-fr' : 'en'));
       break;
+    }
     case 'theme':
       if (isTheme(arg)) {
         setTheme(arg);

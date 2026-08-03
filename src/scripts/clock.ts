@@ -18,7 +18,7 @@ function tick(el: HTMLElement) {
   animate(
     el,
     { opacity: [0.45, 1], transform: ['translateY(-2px)', 'translateY(0)'] },
-    { duration: 0.32, ease: EASE.snappy as unknown as number[] },
+    { duration: 0.32, ease: EASE.snappy },
   );
 }
 

@@ -7,7 +7,7 @@ type Target = HTMLElement | Element;
 export interface AnimOptions {
   duration?: number;
   delay?: number;
-  ease?: readonly number[];
+  ease?: readonly [number, number, number, number];
 }
 
 export function fadeIn(el: Target, opts: AnimOptions = {}) {
@@ -22,7 +22,7 @@ export function fadeIn(el: Target, opts: AnimOptions = {}) {
     {
       duration: opts.duration ?? 0.45,
       delay: opts.delay ?? 0,
-      ease: (opts.ease ?? EASE.smooth) as number[],
+      ease: opts.ease ?? EASE.smooth,
     },
   );
 }
@@ -35,11 +35,11 @@ export function fallIn(el: Target, opts: AnimOptions = {}) {
   }
   return animate(
     el,
-    { opacity: [0, 1], transform: ['translateY(-90px)', 'translateY(0)'] },
+    { opacity: [0, 1], transform: ['translateY(-18px)', 'translateY(0)'] },
     {
-      duration: opts.duration ?? 0.9,
+      duration: opts.duration ?? 0.6,
       delay: opts.delay ?? 0,
-      ease: (opts.ease ?? EASE.bouncy) as number[],
+      ease: opts.ease ?? EASE.smooth,
     },
   );
 }
@@ -55,7 +55,7 @@ export function pop(el: Target, opts: AnimOptions = {}) {
     {
       duration: opts.duration ?? 0.52,
       delay: opts.delay ?? 0,
-      ease: (opts.ease ?? EASE.bouncy) as number[],
+      ease: opts.ease ?? EASE.bouncy,
     },
   );
 }
@@ -71,7 +71,7 @@ export function fadeOut(el: Target, opts: AnimOptions = {}) {
     {
       duration: opts.duration ?? 0.18,
       delay: opts.delay ?? 0,
-      ease: (opts.ease ?? EASE.snappy) as number[],
+      ease: opts.ease ?? EASE.snappy,
     },
   );
 }
@@ -95,7 +95,7 @@ export function morph(
   const sy = from.height / to.height;
 
   const duration = opts.duration ?? 0.38;
-  const ease = (opts.ease ?? EASE.bouncy) as number[];
+  const ease = opts.ease ?? EASE.bouncy;
 
   el.style.transformOrigin = 'top left';
   const parent = animate(

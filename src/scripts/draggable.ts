@@ -1,22 +1,24 @@
 const MIN_VISIBLE = 80;
+const DRAG_THRESHOLD = 4;
 
 export function makeDraggable(
   win: HTMLElement,
   handle: HTMLElement,
   canDrag: () => boolean,
+  onDragStart?: () => void,
 ): void {
   let dragging = false;
+  let pending = false;
+  let pendingX = 0, pendingY = 0;
   let startX = 0, startY = 0, startLeft = 0, startTop = 0;
   let winW = 0, winH = 0, handleH = 0;
 
-  function toAbsolute() {
+  function measure() {
     const r = win.getBoundingClientRect();
-    win.style.translate = 'none';
-    win.style.left = r.left + 'px';
-    win.style.top = r.top + 'px';
     winW = r.width;
     winH = r.height;
     handleH = handle.getBoundingClientRect().height || 32;
+    return r;
   }
 
   function isControl(e: Event) {
@@ -36,17 +38,37 @@ export function makeDraggable(
     ];
   }
 
-  function beginDrag(clientX: number, clientY: number) {
+  function confirmDrag(clientX: number, clientY: number) {
+    const preRect = win.getBoundingClientRect();
+    // horizontal offset as a fraction of the pre-drag width: a window that shrinks
+    // (e.g. leaving fullscreen) still anchors the cursor to the same relative spot
+    // on its titlebar, instead of an absolute pixel offset that may not fit anymore
+    const fracX = preRect.width ? (pendingX - preRect.left) / preRect.width : 0;
+    const offsetY = pendingY - preRect.top;
+
+    onDragStart?.();
+
     win.classList.add('is-dragging');
-    toAbsolute();
+    win.style.translate = 'none';
+    measure();
+
+    const offsetX = fracX * winW;
+    const [left, top] = clamp(clientX - offsetX, clientY - offsetY);
+    win.style.left = left + 'px';
+    win.style.top = top + 'px';
+
     dragging = true;
     startX = clientX;
     startY = clientY;
-    startLeft = parseInt(win.style.left) || 0;
-    startTop = parseInt(win.style.top) || 0;
+    startLeft = left;
+    startTop = top;
   }
 
   function moveDrag(clientX: number, clientY: number) {
+    if (pending && !dragging) {
+      if (Math.hypot(clientX - pendingX, clientY - pendingY) < DRAG_THRESHOLD) return;
+      confirmDrag(clientX, clientY);
+    }
     if (!dragging) return;
     const [left, top] = clamp(
       startLeft + (clientX - startX),
@@ -57,6 +79,7 @@ export function makeDraggable(
   }
 
   function stopDrag() {
+    pending = false;
     if (!dragging) return;
     dragging = false;
     win.classList.remove('is-dragging');
@@ -65,7 +88,9 @@ export function makeDraggable(
   handle.addEventListener('mousedown', (e) => {
     if (!canDrag() || isControl(e)) return;
     e.preventDefault();
-    beginDrag(e.clientX, e.clientY);
+    pending = true;
+    pendingX = e.clientX;
+    pendingY = e.clientY;
   });
 
   document.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
@@ -73,11 +98,13 @@ export function makeDraggable(
 
   handle.addEventListener('touchstart', (e) => {
     if (!canDrag() || isControl(e)) return;
-    beginDrag(e.touches[0].clientX, e.touches[0].clientY);
+    pending = true;
+    pendingX = e.touches[0].clientX;
+    pendingY = e.touches[0].clientY;
   }, { passive: true });
 
   handle.addEventListener('touchmove', (e) => {
-    if (!dragging) return;
+    if (!pending && !dragging) return;
     e.preventDefault();
     moveDrag(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: false });
@@ -86,13 +113,9 @@ export function makeDraggable(
 
   window.addEventListener('resize', () => {
     if (!win.style.left || !win.style.top) return;
-    const r = win.getBoundingClientRect();
-    winW = r.width;
-    winH = r.height;
-    handleH = handle.getBoundingClientRect().height || 32;
+    measure();
     const [left, top] = clamp(parseInt(win.style.left) || 0, parseInt(win.style.top) || 0);
     win.style.left = left + 'px';
     win.style.top = top + 'px';
   });
 }
-

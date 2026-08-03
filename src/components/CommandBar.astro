@@ -36,6 +36,11 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
   data-sudo={t('cmd.sudo')}
   data-not-found={t('cmd.notFound')}
   data-cd-not-found={t('cmd.cdNotFound')}
+  data-cat-not-found={t('cmd.catNotFound')}
+  data-cat-is-dir={t('cmd.catIsDir')}
+  data-dir-empty={t('cmd.dirEmpty')}
+  data-deleted={t('cmd.deleted')}
+  data-wife={t('cmd.wife')}
   data-theme-set={t('cmd.themeSet')}
   data-theme-unknown={t('cmd.themeUnknown')}
   data-blog-slugs={blogSlugs.join(',')}

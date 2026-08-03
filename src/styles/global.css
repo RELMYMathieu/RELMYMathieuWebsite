@@ -298,3 +298,38 @@ button.dashed-hint {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── "sudo rm -rf /" easter egg ── */
+
+html[data-deleted='1'] body > *:not(#rm-rf-overlay) {
+  visibility: hidden;
+}
+
+#rm-rf-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  white-space: pre-line;
+  background: #000000;
+  color: #ffffff;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+#rm-rf-overlay.is-visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #rm-rf-overlay {
+    transition: none;
+  }
+}

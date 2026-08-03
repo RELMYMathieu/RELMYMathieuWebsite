@@ -82,7 +82,6 @@
   box-shadow: none;
 }
 
-.ww.is-fullscreen .ww-titlebar { cursor: default; }
 .ww.is-fullscreen .ww-body { max-height: calc(100dvh - 2.5rem); }
 
 .ww.is-minimized {

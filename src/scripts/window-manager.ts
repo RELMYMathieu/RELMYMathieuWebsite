@@ -8,6 +8,7 @@ interface WinEntry {
   trigger: HTMLButtonElement;
   backdrop: HTMLElement;
   state: WindowState;
+  activeMorph: { stop(): void }[] | null;
 }
 
 const Z_BASE = 100;
@@ -112,10 +113,19 @@ function clearMorphStyles(el: HTMLElement, ...children: HTMLElement[]) {
   }
 }
 
+function stopActiveMorph(win: HTMLElement, entry: WinEntry): void {
+  if (!entry.activeMorph) return;
+  for (const anim of entry.activeMorph) anim.stop();
+  entry.activeMorph = null;
+  const titlebar = win.querySelector<HTMLElement>('.ww-titlebar');
+  clearMorphStyles(win, ...(titlebar ? [titlebar] : []));
+}
+
 function applyState(win: HTMLElement, next: WindowState) {
   const entry = windows.get(win);
   if (!entry) return;
 
+  stopActiveMorph(win, entry);
   win.classList.remove('is-opening');
   const titlebar = win.querySelector<HTMLElement>('.ww-titlebar')!;
   const from = win.getBoundingClientRect();
@@ -140,8 +150,12 @@ function applyState(win: HTMLElement, next: WindowState) {
 
   const result = morph(win, from, to, { duration, ease, counterScale: [titlebar] });
   if (!result) return;
+  entry.activeMorph = [result.parent, ...result.counterAnims];
   Promise.all([result.parent, ...result.counterAnims]).finally(() => {
-    clearMorphStyles(win, titlebar);
+    if (entry.activeMorph) {
+      entry.activeMorph = null;
+      clearMorphStyles(win, titlebar);
+    }
   });
 }
 
@@ -202,7 +216,7 @@ function open(win: HTMLElement, trigger: HTMLButtonElement, backdrop: HTMLElemen
     win.style.transition = '';
   }
 
-  windows.set(win, { el: win, trigger, backdrop, state: 'normal' });
+  windows.set(win, { el: win, trigger, backdrop, state: 'normal', activeMorph: null });
   win.classList.remove('is-fullscreen', 'is-minimized');
   win.classList.add('is-open');
   win.setAttribute('aria-hidden', 'false');
@@ -293,7 +307,19 @@ export function initWindowManager(): void {
     if (!win) return;
 
     const handle = win.querySelector<HTMLElement>('[data-drag-handle]')!;
-    makeDraggable(win, handle, () => !isMobile() && windows.get(win)?.state === 'normal');
+    makeDraggable(
+      win,
+      handle,
+      () => !isMobile() && windows.get(win)?.state !== 'minimized',
+      () => {
+        const entry = windows.get(win);
+        if (entry?.state !== 'fullscreen') return;
+        stopActiveMorph(win, entry);
+        win.classList.remove('is-fullscreen');
+        entry.state = 'normal';
+        syncIcon(win, 'normal');
+      },
+    );
 
     trigger.addEventListener('click', () => open(win, trigger, backdrop));
 
@@ -312,6 +338,14 @@ export function initWindowManager(): void {
       if (!entry || entry.state !== 'minimized') return;
       if ((e.target as HTMLElement).closest('[data-action]')) return;
       applyState(win, 'normal');
+    });
+
+    handle.addEventListener('dblclick', (e) => {
+      if (isMobile()) return;
+      if ((e.target as HTMLElement).closest('[data-action]')) return;
+      const entry = windows.get(win);
+      if (!entry || entry.state === 'minimized') return;
+      applyState(win, entry.state === 'fullscreen' ? 'normal' : 'fullscreen');
     });
   });
 

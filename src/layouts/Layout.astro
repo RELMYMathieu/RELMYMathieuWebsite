@@ -161,7 +161,7 @@ const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
         data-tip={t('footer.uptimeTip').replace('{time}', buildTimeFormatted)}
       ></span>
       <span class="status-seg status-seg--muted">{t('footer.status')}</span>
-      <span class="status-seg status-seg--muted" aria-hidden="true">(｡･∀･)ﾉﾞ</span>
+      <span class="status-seg status-seg--muted" id="footer-kaomoji" aria-hidden="true">(｡･∀･)ﾉﾞ</span>
     </footer>
     <script>
       import '../scripts/theme';
@@ -171,6 +171,7 @@ const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
       import '../scripts/fade-in';
       import '../scripts/uptime';
       import '../scripts/boot';
+      import '../scripts/kaomoji';
     </script>
   </body>
 </html>

@@ -18,14 +18,15 @@ let keepOpenAcrossNav = false;
 
 const WHOAMI = 'relmymathieu';
 
-const COMMANDS = ['help', 'cd', 'dir', 'theme', 'en', 'fr', 'whoami', 'clear', 'exit'];
+const COMMANDS = ['help', 'cd', 'dir', 'cat', 'pwd', 'echo', 'fetch', 'theme', 'en', 'fr', 'whoami', 'clear', 'exit'];
+const WIFE_URL = 'https://www.youtube.com/@zythecreator/videos';
 
 const ARG_COMPLETIONS: Record<string, () => string[]> = {
   theme: () => THEMES.map((t) => t.code),
-  cd: () => {
+  cd: () => ['~', '~/blog', 'blog', '..'],
+  cat: () => {
     const slugs = getBlogSlugs();
-    const relative = whereAmI() === 'blog' ? slugs : slugs.map((s) => `blog/${s}`);
-    return ['~', '~/blog', 'blog', '..', ...relative];
+    return whereAmI() === 'blog' ? slugs : slugs.map((s) => `blog/${s}`);
   },
 };
 
@@ -58,14 +59,24 @@ function completionFor(value: string): string | null {
   return match.length > argPart.length ? value.slice(0, argStart) + match : null;
 }
 
-type CdTarget = { kind: 'home' } | { kind: 'blog' } | { kind: 'post'; slug: string };
+type CdTarget = { kind: 'home' } | { kind: 'blog' };
 
-function resolveCdTarget(argRaw: string, slugs: string[], inBlog: boolean): CdTarget | null {
+function resolveCdTarget(argRaw: string): CdTarget | null {
   const trimmed = argRaw.trim();
   if (!trimmed || trimmed === '~' || trimmed === '/' || trimmed === '..' || trimmed === '../') return { kind: 'home' };
   const stripped = trimmed.replace(/^~\//, '').replace(/\/+$/, '');
   if (stripped === '') return { kind: 'home' };
   if (stripped === 'blog') return { kind: 'blog' };
+  return null;
+}
+
+type CatTarget = { kind: 'post'; slug: string } | { kind: 'dir' } | null;
+
+function resolveCatTarget(argRaw: string, slugs: string[], inBlog: boolean): CatTarget {
+  const trimmed = argRaw.trim();
+  if (!trimmed) return null;
+  const stripped = trimmed.replace(/^~\//, '').replace(/\/+$/, '');
+  if (stripped === 'blog') return { kind: 'dir' };
   if (stripped.startsWith('blog/')) {
     const slug = stripped.slice('blog/'.length);
     return slugs.includes(slug) ? { kind: 'post', slug } : null;
@@ -215,8 +226,147 @@ function goBlog(): void {
   navigate(currentLang() === 'fr-fr' ? '/fr-fr/blog' : '/blog');
 }
 
-function goPost(slug: string): void {
-  navigate(currentLang() === 'fr-fr' ? `/fr-fr/blog/${slug}` : `/blog/${slug}`);
+const BLOCK_TAGS = new Set(['H1', 'H2', 'H3', 'H4', 'P', 'LI', 'BLOCKQUOTE', 'PRE']);
+
+function extractPostText(root: Element): string {
+  const lines: string[] = [];
+
+  function walk(node: Element): void {
+    if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') return;
+    if (BLOCK_TAGS.has(node.tagName)) {
+      const text = node.textContent?.replace(/\s+/g, ' ').trim();
+      if (text) lines.push(text);
+      return;
+    }
+    for (const child of Array.from(node.children)) walk(child);
+  }
+
+  walk(root);
+  return lines.join('\n\n');
+}
+
+async function catPost(slug: string, notFoundMsg: string): Promise<void> {
+  const url = currentLang() === 'fr-fr' ? `/fr-fr/blog/${slug}` : `/blog/${slug}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('not ok');
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const article = doc.querySelector('.prose-mdx');
+    const text = article ? extractPostText(article) : '';
+    print(text || notFoundMsg.replace('{slug}', slug));
+  } catch {
+    print(notFoundMsg.replace('{slug}', slug));
+  }
+}
+
+function guessOS(ua: string): string {
+  if (/Windows/.test(ua)) return 'Windows';
+  if (/Mac OS X/.test(ua)) return 'macOS';
+  if (/Android/.test(ua)) return 'Android';
+  if (/iPhone|iPad|iOS/.test(ua)) return 'iOS';
+  if (/Linux/.test(ua)) return 'Linux';
+  return 'unknown';
+}
+
+function guessBrowser(ua: string): string {
+  if (/Edg\//.test(ua)) return 'Edge';
+  if (/Firefox\//.test(ua)) return 'Firefox';
+  if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) return 'Chrome';
+  if (/Safari\//.test(ua) && !/Chrome/.test(ua)) return 'Safari';
+  return 'unknown';
+}
+
+interface SystemInfo {
+  os: string;
+  browser: string;
+  cpu: string;
+  gpu: string;
+  memory: string;
+  screen: string;
+  lang: string;
+}
+
+function collectSystemInfo(): SystemInfo {
+  const nav = navigator as Navigator & {
+    userAgentData?: { platform?: string; brands?: { brand: string; version: string }[] };
+    deviceMemory?: number;
+  };
+
+  let os = 'unknown';
+  try {
+    os = nav.userAgentData?.platform || guessOS(navigator.userAgent);
+  } catch {}
+
+  let browser = 'unknown';
+  try {
+    const brands = nav.userAgentData?.brands;
+    const brand = brands?.find((b) => !/Not.*Brand/i.test(b.brand)) ?? brands?.[brands.length - 1];
+    browser = brand ? `${brand.brand} ${brand.version}` : guessBrowser(navigator.userAgent);
+  } catch {}
+
+  let cpu = 'unknown';
+  try {
+    cpu = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} threads` : 'unknown';
+  } catch {}
+
+  let memory = 'unknown';
+  try {
+    memory = nav.deviceMemory ? `${nav.deviceMemory} GB (approx)` : 'unknown';
+  } catch {}
+
+  let gpu = 'unknown';
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = (canvas.getContext('webgl') ?? canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+    const ext = gl?.getExtension('WEBGL_debug_renderer_info');
+    const renderer = ext ? gl?.getParameter(ext.UNMASKED_RENDERER_WEBGL) : undefined;
+    if (typeof renderer === 'string' && renderer) gpu = renderer;
+  } catch {}
+
+  let screen = 'unknown';
+  try {
+    screen = `${window.screen.width}x${window.screen.height} @${window.devicePixelRatio}x`;
+  } catch {}
+
+  let lang = 'unknown';
+  try {
+    lang = navigator.language || 'unknown';
+  } catch {}
+
+  return { os, browser, cpu, gpu, memory, screen, lang };
+}
+
+function runFetchCommand(): void {
+  const info = collectSystemInfo();
+  const theme = document.documentElement.dataset.theme ?? 'slate';
+  const uptime = document.getElementById('status-uptime')?.textContent?.trim() || 'unknown';
+  print(
+    [
+      `${WHOAMI}@web`,
+      '-------------------',
+      `os      : ${info.os}`,
+      `browser : ${info.browser}`,
+      `cpu     : ${info.cpu}`,
+      `gpu     : ${info.gpu}`,
+      `memory  : ${info.memory}`,
+      `screen  : ${info.screen}`,
+      `lang    : ${info.lang}`,
+      `theme   : ${theme}`,
+      `uptime  : ${uptime}`,
+    ].join('\n'),
+  );
+}
+
+function triggerFakeDeletion(message: string): void {
+  if (document.getElementById('rm-rf-overlay')) return;
+  closeBar();
+  const overlay = document.createElement('div');
+  overlay.id = 'rm-rf-overlay';
+  overlay.setAttribute('role', 'alert');
+  overlay.textContent = message;
+  document.body.appendChild(overlay);
+  document.documentElement.dataset.deleted = '1';
+  requestAnimationFrame(() => overlay.classList.add('is-visible'));
 }
 
 function runCommand(raw: string): void {
@@ -238,6 +388,11 @@ function runCommand(raw: string): void {
     sudo: panel?.dataset.sudo ?? '',
     notFound: panel?.dataset.notFound ?? '',
     cdNotFound: panel?.dataset.cdNotFound ?? '',
+    catNotFound: panel?.dataset.catNotFound ?? '',
+    catIsDir: panel?.dataset.catIsDir ?? '',
+    dirEmpty: panel?.dataset.dirEmpty ?? '',
+    deleted: panel?.dataset.deleted ?? '',
+    wife: panel?.dataset.wife ?? '',
     themeSet: panel?.dataset.themeSet ?? '',
     themeUnknown: panel?.dataset.themeUnknown ?? '',
   };
@@ -257,10 +412,14 @@ function runCommand(raw: string): void {
       print(WHOAMI);
       break;
     case 'cd': {
-      const target = resolveCdTarget(arg, getBlogSlugs(), whereAmI() === 'blog');
+      if (arg.trim().toLowerCase() === 'wife') {
+        window.open(WIFE_URL, '_blank', 'noopener,noreferrer');
+        print(strings.wife);
+        break;
+      }
+      const target = resolveCdTarget(arg);
       if (target?.kind === 'home') goHome();
       else if (target?.kind === 'blog') goBlog();
-      else if (target?.kind === 'post') goPost(target.slug);
       else print(strings.cdNotFound.replace('{path}', arg || '~'));
       break;
     }
@@ -274,9 +433,25 @@ function runCommand(raw: string): void {
       } else {
         entries = [];
       }
-      print(entries.join('\n'));
+      print(entries.length ? entries.join('\n') : strings.dirEmpty);
       break;
     }
+    case 'cat': {
+      const target = resolveCatTarget(arg, getBlogSlugs(), whereAmI() === 'blog');
+      if (target?.kind === 'post') void catPost(target.slug, strings.catNotFound);
+      else if (target?.kind === 'dir') print(strings.catIsDir.replace('{path}', arg.trim()));
+      else print(strings.catNotFound.replace('{slug}', arg.trim() || '?'));
+      break;
+    }
+    case 'pwd':
+      print(whereAmI() === 'blog' ? '~/blog' : '~');
+      break;
+    case 'echo':
+      print(arg);
+      break;
+    case 'fetch':
+      runFetchCommand();
+      break;
     case 'en':
     case 'fr': {
       const { input: langInput } = els();
@@ -293,7 +468,11 @@ function runCommand(raw: string): void {
       }
       break;
     case 'sudo':
-      print(strings.sudo);
+      if (/^rm\s+-rf\s+\/?$/i.test(arg.trim())) {
+        triggerFakeDeletion(strings.deleted);
+      } else {
+        print(strings.sudo);
+      }
       break;
     case 'exit':
       closeBar();

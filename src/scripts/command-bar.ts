@@ -268,11 +268,11 @@ function runCommand(raw: string): void {
       const raw = rawPath();
       let entries: string[];
       if (raw === '/') {
-        entries = ['.', '..', 'blog'];
+        entries = ['blog'];
       } else if (raw === '/blog' || raw.startsWith('/blog/')) {
-        entries = ['.', '..', ...getBlogSlugs()];
+        entries = getBlogSlugs();
       } else {
-        entries = ['.', '..'];
+        entries = [];
       }
       print(entries.join('\n'));
       break;

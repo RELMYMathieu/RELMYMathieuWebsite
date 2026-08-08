@@ -1,5 +1,6 @@
 import { navigate } from 'astro:transitions/client';
 import { onPageReady } from '../animations';
+import { lockScroll as lock, unlockScroll as unlock } from './scroll-lock';
 import { setTheme } from './theme';
 import { isTheme, THEMES } from '../theme/config';
 import {
@@ -11,6 +12,8 @@ import {
   nowPlayingEnabled,
   type PlaybackState,
 } from './now-playing';
+import { formatDwell, moodSnapshot, weatherLabel } from './mood';
+import type { MoodPhase } from '../config/mood';
 
 interface LogEntry {
   text: string;
@@ -27,7 +30,7 @@ let keepOpenAcrossNav = false;
 
 const WHOAMI = 'relmymathieu';
 
-const COMMANDS = ['help', 'cd', 'dir', 'cat', 'pwd', 'echo', 'fetch', 'np', 'theme', 'en', 'fr', 'whoami', 'clear', 'exit'];
+const COMMANDS = ['help', 'cd', 'dir', 'cat', 'pwd', 'echo', 'fetch', 'np', 'mood', 'rss', 'theme', 'en', 'fr', 'whoami', 'clear', 'exit'];
 const WIFE_URL = 'https://www.youtube.com/@zythecreator/videos';
 
 const ARG_COMPLETIONS: Record<string, () => string[]> = {
@@ -132,17 +135,8 @@ function isOpen(): boolean {
   return els().panel?.classList.contains('is-open') ?? false;
 }
 
-function lockScroll(): void {
-  if (document.body.style.overflow === 'hidden') return;
-  const gap = window.innerWidth - document.documentElement.clientWidth;
-  if (gap > 0) document.body.style.paddingRight = gap + 'px';
-  document.body.style.overflow = 'hidden';
-}
-
-function unlockScroll(): void {
-  document.body.style.overflow = '';
-  document.body.style.paddingRight = '';
-}
+const lockScroll = () => lock('cmdbar');
+const unlockScroll = () => unlock('cmdbar');
 
 function openBar(): void {
   const { backdrop, panel, input } = els();
@@ -345,11 +339,12 @@ function collectSystemInfo(): SystemInfo {
   return { os, browser, cpu, gpu, memory, screen, lang };
 }
 
-function runFetchCommand(): void {
+function runFetchCommand(phaseLabels: PhaseLabels): void {
   const info = collectSystemInfo();
   const theme = document.documentElement.dataset.theme ?? 'slate';
   const uptime = document.getElementById('status-uptime')?.textContent?.trim() || 'unknown';
   const np = getCachedNowPlaying();
+  const mood = moodSnapshot();
 
   const lines = [
     `${WHOAMI}@web`,
@@ -363,6 +358,7 @@ function runFetchCommand(): void {
     `lang    : ${info.lang}`,
     `theme   : ${theme}`,
     `uptime  : ${uptime}`,
+    `mood    : ${phaseLabels[mood.phase] ?? mood.phase}`,
   ];
 
   if (np?.title) {
@@ -433,6 +429,53 @@ async function runNpCommand(strings: NpStrings): Promise<void> {
   print(lines.join('\n'));
 }
 
+type PhaseLabels = Partial<Record<MoodPhase, string>>;
+
+interface MoodStrings {
+  heading: string;
+  phase: string;
+  weather: string;
+  visits: string;
+  dwell: string;
+  verdict: string;
+  unknown: string;
+  phaseLabels: PhaseLabels;
+}
+
+function parsePhaseLabels(raw: string | undefined): PhaseLabels {
+  try {
+    const parsed = JSON.parse(raw ?? '{}') as PhaseLabels;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function runMoodCommand(strings: MoodStrings): void {
+  const mood = moodSnapshot();
+  const weather = mood.weather;
+
+  const rows: [string, string][] = [
+    [strings.phase, `${strings.phaseLabels[mood.phase] ?? mood.phase} (${mood.time} ${mood.timeZone})`],
+    [
+      strings.weather,
+      weather ? `${weatherLabel(weather.bucket) ?? weather.bucket} ${weather.temperature}°` : strings.unknown,
+    ],
+    [strings.visits, String(mood.visits)],
+    [strings.dwell, formatDwell(mood.dwellMs)],
+  ];
+  if (mood.line) rows.push([strings.verdict, mood.line]);
+
+  const pad = Math.max(...rows.map(([label]) => label.length));
+  print(
+    [
+      strings.heading,
+      '-------------------',
+      ...rows.map(([label, value]) => `${label.padEnd(pad)} : ${value}`),
+    ].join('\n'),
+  );
+}
+
 function triggerFakeDeletion(message: string): void {
   if (document.getElementById('rm-rf-overlay')) return;
   closeBar();
@@ -471,6 +514,7 @@ function runCommand(raw: string): void {
     wife: panel?.dataset.wife ?? '',
     themeSet: panel?.dataset.themeSet ?? '',
     themeUnknown: panel?.dataset.themeUnknown ?? '',
+    rss: panel?.dataset.rss ?? '',
   };
 
   const npStrings: NpStrings = {
@@ -484,6 +528,17 @@ function runCommand(raw: string): void {
     off: panel?.dataset.npOff ?? '',
     error: panel?.dataset.npError ?? '',
     reauth: panel?.dataset.npReauth ?? '',
+  };
+
+  const moodStrings: MoodStrings = {
+    heading: panel?.dataset.moodHeading ?? 'site mood',
+    phase: panel?.dataset.moodPhase ?? 'phase',
+    weather: panel?.dataset.moodWeather ?? 'weather',
+    visits: panel?.dataset.moodVisits ?? 'visits',
+    dwell: panel?.dataset.moodDwell ?? 'dwell',
+    verdict: panel?.dataset.moodVerdict ?? 'verdict',
+    unknown: panel?.dataset.moodUnknown ?? 'unknown',
+    phaseLabels: parsePhaseLabels(panel?.dataset.moodPhaseLabels),
   };
 
   const [cmd, ...rest] = trimmed.split(/\s+/);
@@ -539,12 +594,21 @@ function runCommand(raw: string): void {
       print(arg);
       break;
     case 'fetch':
-      runFetchCommand();
+      runFetchCommand(moodStrings.phaseLabels);
       break;
     case 'np':
     case 'spotify':
       void runNpCommand(npStrings);
       break;
+    case 'mood':
+      runMoodCommand(moodStrings);
+      break;
+    case 'rss': {
+      const feed = currentLang() === 'fr-fr' ? '/fr-fr/rss.xml' : '/rss.xml';
+      print(strings.rss.replace('{path}', feed));
+      window.open(feed, '_blank', 'noopener,noreferrer');
+      break;
+    }
     case 'en':
     case 'fr': {
       const { input: langInput } = els();

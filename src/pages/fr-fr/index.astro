@@ -5,14 +5,24 @@ import SocialLinks from '../../components/SocialLinks.astro';
 import Works from '../../components/Works.astro';
 import EngineLightbox from '../../components/EngineLightbox.astro';
 import { ageFromBirthday, BIRTHDAY } from '../../utils/age';
+import { useTranslations } from '../../i18n/utils';
+import { getLocale } from '../../i18n/config';
 
+const t = useTranslations('fr-fr');
 const age = ageFromBirthday(BIRTHDAY);
 const birthdayFormatted = '3 septembre 2008';
 ---
 
 <Layout title="Accueil" description="Site personnel de Relmy Mathieu, futur ingénieur nucléaire, dev, nerd.">
-  <Section delay={0}>
-    <p class="prompt-line">relmymathieu@web</p>
+  <Section bleed delay={0}>
+    <p class="prompt-line">
+      relmymathieu@web<span class="prompt-sep" aria-hidden="true"> ; </span><span
+        id="last-login"
+        data-login-back={t('login.back')}
+        data-login-regular={t('login.regular')}
+        data-login-locale={getLocale('fr-fr').htmlLang}
+      >{t('login.never')}</span>
+    </p>
     <h1 class="text-4xl font-bold mb-1">Relmy Mathieu</h1>
     <p class="text-muted">Futur Ingénieur Nucléaire, Dev, Nerd</p>
     <SocialLinks />
@@ -20,30 +30,37 @@ const birthdayFormatted = '3 septembre 2008';
 
   <Works lang="fr-fr" delay={0.07} />
 
-  <Section delay={0.14}>
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-subtle">Fun facts sur moi</h2>
-    <p class="text-sm leading-relaxed">☕ J'aime beaucoup le café (*^▽^*)</p>
-    <p class="text-sm leading-relaxed">🐱 J'aime aussi les chats</p>
-    <p class="text-sm leading-relaxed">
-      <span class="dashed-hint" tabindex="0" data-tip={`Né le ${birthdayFormatted} ;)`}>
-        J'ai {age} ans
-      </span>
-    </p>
-    <h2 class="font-bold mt-4 mb-2 text-sm uppercase tracking-widest text-subtle">D'où je viens & langues parlées</h2>
-    <p class="text-sm leading-relaxed">🇫🇷 Français!</p>
-    <p class="text-sm leading-relaxed">
-      <span class="dashed-hint" tabindex="0" data-tip="Pour l'anglais : j'y travaille, un diplôme officiel est prévu, pour un jour... Peut-être.">
-        Je parle couramment le français et l'anglais (🇫🇷 / 🇬🇧)
-      </span>
-    </p>
-    <p class="text-sm leading-relaxed mt-4">
+  <Section bare delay={0.14}>
+    <h2 class="section-heading">Fun facts sur moi</h2>
+    <div class="fact-list">
+      <p class="text-sm">☕ J'aime beaucoup le café (*^▽^*)</p>
+      <p class="text-sm">🐱 J'aime aussi les chats</p>
+      <p class="text-sm">
+        <span class="dashed-hint" tabindex="0" data-tip={`Né le ${birthdayFormatted} ;)`}>
+          J'ai {age} ans
+        </span>
+      </p>
+    </div>
+  </Section>
+
+  <Section bare delay={0.21}>
+    <h2 class="section-heading">D'où je viens & langues parlées</h2>
+    <div class="fact-list">
+      <p class="text-sm">🇫🇷 Français!</p>
+      <p class="text-sm">
+        <span class="dashed-hint" tabindex="0" data-tip="Pour l'anglais : j'y travaille, un diplôme officiel est prévu, pour un jour... Peut-être.">
+          Je parle couramment le français et l'anglais (🇫🇷 / 🇬🇧)
+        </span>
+      </p>
+    </div>
+    <p class="text-sm leading-relaxed prose-measure mt-4">
       J'apprends également l'Italien (🇮🇹) et le Russe (🇷🇺), je peux me débrouiller avec les deux, mais je ne suis pas encore fluent.
     </p>
   </Section>
 
-  <Section delay={0.21}>
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-subtle">Développement, de jeux, et autres applications (hobbies)</h2>
-    <p class="text-sm leading-relaxed">
+  <Section bare delay={0.28}>
+    <h2 class="section-heading">Développement, de jeux, et autres applications (hobbies)</h2>
+    <p class="text-sm leading-relaxed prose-measure">
       Je développe des jeux. Je travaille sur mon propre
       <button
         class="dashed-hint"
@@ -60,7 +77,7 @@ const birthdayFormatted = '3 septembre 2008';
       des projets de lycée, parce que pourquoi pas. C'est un bon moyen d'apprendre et de s'amuser avec le développement
       web et de s'exprimer, même si ce n'est pas mon domaine principal d'intérêt.
     </p>
-    <p class="text-sm leading-relaxed mt-4">
+    <p class="text-sm leading-relaxed prose-measure mt-4">
       Plus généralement, j'aime coder dans mon temps libre, que ce soit un petit
       script d'automatisation, un jeu, un site pour un ami, un projet scolaire, ou
       juste pour le plaisir. Coder est une façon créative de passer le temps.
@@ -69,9 +86,9 @@ const birthdayFormatted = '3 septembre 2008';
     </p>
   </Section>
 
-  <Section delay={0.28}>
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-subtle">Ingénierie Nucléaire</h2>
-    <p class="text-sm leading-relaxed">
+  <Section bare delay={0.35}>
+    <h2 class="section-heading">Ingénierie Nucléaire</h2>
+    <p class="text-sm leading-relaxed prose-measure">
       J'ai une vraie passion pour l'ingénierie nucléaire, les réacteurs, leur
       physique, tout ça. Je suis rentré dans un cursus universitaire de 5 ans pour
       ça en passant un concours d'entrée, et j'y suis déjà. À côté, j'ai un jeu sur

@@ -8,6 +8,7 @@ export const THEMES = [
   { code: 'slate', label: 'Slate', swatch: '#a1a1aa' },
   { code: 'rem',   label: 'Rem',   swatch: '#90bff9' },
   { code: 'ram',   label: 'Ram',   swatch: '#ffa8bc' },
+  { code: 'aero',  label: 'Aero',  swatch: '#5ba7d9' },
 ] as const satisfies readonly ThemeDef[];
 
 export type Theme = typeof THEMES[number]['code'];

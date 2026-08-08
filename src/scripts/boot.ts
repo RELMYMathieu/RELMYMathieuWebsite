@@ -1,4 +1,6 @@
 import { onPageReady, prefersReducedMotion } from '../animations';
+import { formatLogin } from './last-login';
+import { getVisit } from './visit';
 
 const STEP_MS = 200;
 const HOLD_MS = 700;
@@ -56,6 +58,16 @@ function initBoot(): void {
     finish(screen);
     return;
   }
+
+  const { previous } = getVisit();
+  const loginLine =
+    previous === null
+      ? screen.dataset.firstLogin
+      : screen.dataset.lastLogin?.replace(
+          '{date}',
+          formatLogin(previous, screen.dataset.loginLocale || 'en', true),
+        );
+  if (loginLine) lines.push(loginLine);
 
   let i = 0;
   const interval = window.setInterval(() => {

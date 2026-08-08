@@ -5,14 +5,24 @@ import SocialLinks from '../components/SocialLinks.astro';
 import Works from '../components/Works.astro';
 import EngineLightbox from '../components/EngineLightbox.astro';
 import { ageFromBirthday, BIRTHDAY } from '../utils/age';
+import { useTranslations } from '../i18n/utils';
+import { getLocale } from '../i18n/config';
 
+const t = useTranslations('en');
 const age = ageFromBirthday(BIRTHDAY);
 const birthdayFormatted = 'September 3, 2008';
 ---
 
 <Layout title="Home">
-  <Section delay={0}>
-    <p class="prompt-line">relmymathieu@web</p>
+  <Section bleed delay={0}>
+    <p class="prompt-line">
+      relmymathieu@web<span class="prompt-sep" aria-hidden="true"> ; </span><span
+        id="last-login"
+        data-login-back={t('login.back')}
+        data-login-regular={t('login.regular')}
+        data-login-locale={getLocale('en').htmlLang}
+      >{t('login.never')}</span>
+    </p>
     <h1 class="text-4xl font-bold mb-1">Relmy Mathieu</h1>
     <p class="text-muted">Aspiring Nuclear Engineer, Dev, Nerd</p>
     <SocialLinks />
@@ -20,30 +30,37 @@ const birthdayFormatted = 'September 3, 2008';
 
   <Works lang="en" delay={0.07} />
 
-  <Section delay={0.14}>
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-subtle">Fun facts about myself</h2>
-    <p class="text-sm leading-relaxed">☕ I love coffee (*^▽^*)</p>
-    <p class="text-sm leading-relaxed">🐱 I also love cats</p>
-    <p class="text-sm leading-relaxed">
-      <span class="dashed-hint" tabindex="0" data-tip={`Born ${birthdayFormatted} ;)`}>
-        I'm {age} years old
-      </span>
-    </p>
-    <h2 class="font-bold mt-4 mb-2 text-sm uppercase tracking-widest text-subtle">Where I'm from & languages spoken</h2>
-    <p class="text-sm leading-relaxed">🇫🇷 I'm French</p>
-    <p class="text-sm leading-relaxed">
-      <span class="dashed-hint" tabindex="0" data-tip="Working on getting a proper diploma for it!">
-        I'm bilingual (🇫🇷 / 🇬🇧)
-      </span>
-    </p>
-    <p class="text-sm leading-relaxed mt-4">
+  <Section bare delay={0.14}>
+    <h2 class="section-heading">Fun facts about myself</h2>
+    <div class="fact-list">
+      <p class="text-sm">☕ I love coffee (*^▽^*)</p>
+      <p class="text-sm">🐱 I also love cats</p>
+      <p class="text-sm">
+        <span class="dashed-hint" tabindex="0" data-tip={`Born ${birthdayFormatted} ;)`}>
+          I'm {age} years old
+        </span>
+      </p>
+    </div>
+  </Section>
+
+  <Section bare delay={0.21}>
+    <h2 class="section-heading">Where I'm from & languages spoken</h2>
+    <div class="fact-list">
+      <p class="text-sm">🇫🇷 I'm French</p>
+      <p class="text-sm">
+        <span class="dashed-hint" tabindex="0" data-tip="Working on getting a proper diploma for it!">
+          I'm bilingual (🇫🇷 / 🇬🇧)
+        </span>
+      </p>
+    </div>
+    <p class="text-sm leading-relaxed prose-measure mt-4">
       I'm also learning Italian (🇮🇹) and Russian (🇷🇺), I can get by in both, but I'm not fluent yet.
     </p>
   </Section>
 
-  <Section delay={0.21}>
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-subtle">Making games & code (a hobby)</h2>
-    <p class="text-sm leading-relaxed">
+  <Section bare delay={0.28}>
+    <h2 class="section-heading">Making games & code (a hobby)</h2>
+    <p class="text-sm leading-relaxed prose-measure">
       I code games. I'm working on my own
       <button
         class="dashed-hint"
@@ -57,7 +74,7 @@ const birthdayFormatted = 'September 3, 2008';
       section above. In my free time I also enjoy building web pages, which is kind of
       how this site exists.
     </p>
-    <p class="text-sm leading-relaxed mt-4">
+    <p class="text-sm leading-relaxed prose-measure mt-4">
       Furthermore, I also enjoy coding in my spare time, whether it's a small automation script,
       a game (seen earlier), a website for a friend, for a school project, or just tinkering with some code for fun.
       Coding is a fun way to pass time and to be creative. I like it a lot and I hope that my job will incorporate coding in some way.
@@ -65,9 +82,9 @@ const birthdayFormatted = 'September 3, 2008';
     </p>
   </Section>
 
-  <Section delay={0.28}>
-    <h2 class="font-bold mb-2 text-sm uppercase tracking-widest text-subtle">Nuclear Engineering</h2>
-    <p class="text-sm leading-relaxed">
+  <Section bare delay={0.35}>
+    <h2 class="section-heading">Nuclear Engineering</h2>
+    <p class="text-sm leading-relaxed prose-measure">
       I have a burning passion for nuclear engineering, reactors, their physics, the whole
       thing. I got into a 5-year university program for it by passing an entrance exam, and
       I'm already studying there. On the side, I've got a nuclear engineering related game

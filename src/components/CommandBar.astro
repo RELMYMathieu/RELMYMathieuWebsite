@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import { useTranslations, type Lang } from '../i18n/utils';
+import { MOOD_PHASES } from '../config/mood';
 
 interface Props {
   lang: Lang;
@@ -8,6 +9,10 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
+
+const moodPhaseLabels = Object.fromEntries(
+  MOOD_PHASES.map((phase) => [phase, t(`mood.phase.${phase}`)]),
+);
 
 const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`)))
   .map((p) => p.id.replace(/\/[^/]+$/, ''));
@@ -41,6 +46,7 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
   data-dir-empty={t('cmd.dirEmpty')}
   data-deleted={t('cmd.deleted')}
   data-wife={t('cmd.wife')}
+  data-rss={t('cmd.rss')}
   data-theme-set={t('cmd.themeSet')}
   data-theme-unknown={t('cmd.themeUnknown')}
   data-np-heading={t('cmd.npHeading')}
@@ -53,6 +59,14 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
   data-np-off={t('cmd.npOff')}
   data-np-error={t('cmd.npError')}
   data-np-reauth={t('cmd.npReauth')}
+  data-mood-heading={t('cmd.moodHeading')}
+  data-mood-phase={t('cmd.moodPhase')}
+  data-mood-weather={t('cmd.moodWeather')}
+  data-mood-visits={t('cmd.moodVisits')}
+  data-mood-dwell={t('cmd.moodDwell')}
+  data-mood-verdict={t('cmd.moodVerdict')}
+  data-mood-unknown={t('cmd.moodUnknown')}
+  data-mood-phase-labels={JSON.stringify(moodPhaseLabels)}
   data-blog-slugs={blogSlugs.join(',')}
 >
   <div class="cmdbar-log" id="cmdbar-log" aria-live="polite"></div>
@@ -94,7 +108,6 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
     z-index: 199;
     background: rgba(0, 0, 0, 0);
     backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
     visibility: hidden;
     pointer-events: none;
     transition: background 0.2s ease, backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, visibility 0s linear 0.2s;
@@ -103,7 +116,6 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
   .cmdbar-backdrop.is-open {
     background: var(--scrim);
     backdrop-filter: blur(4px) saturate(130%);
-    -webkit-backdrop-filter: blur(4px) saturate(130%);
     visibility: visible;
     pointer-events: auto;
     transition: background 0.2s ease, backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, visibility 0s linear 0s;
@@ -127,7 +139,6 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
     font-size: 0.8125rem;
     box-shadow: var(--console-shadow, 4px 4px 0 var(--console-border));
     backdrop-filter: var(--console-backdrop-filter, blur(0px));
-    -webkit-backdrop-filter: var(--console-backdrop-filter, blur(0px));
     visibility: hidden;
     opacity: 0;
     overflow: hidden;
@@ -203,11 +214,11 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
   }
 
   .cmdbar-input::placeholder {
-    color: #71717a;
+    color: var(--console-placeholder, #71717a);
   }
 
   .cmdbar-input::selection {
-    background: rgba(255, 255, 255, 0.18);
+    background: var(--console-selection, rgba(255, 255, 255, 0.18));
     color: inherit;
   }
 
@@ -226,10 +237,21 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
   }
 
   :global(.cmdbar-ghost-suggest) {
-    color: #71717a;
+    color: var(--console-placeholder, #71717a);
   }
 
   @media (max-width: 560px) {
     .cmdbar-trigger { display: none; }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .cmdbar,
+    .cmdbar-backdrop.is-open {
+      backdrop-filter: none;
+    }
+
+    .cmdbar {
+      background-color: var(--console-bg-solid, var(--console-bg));
+    }
   }
 </style>

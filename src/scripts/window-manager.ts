@@ -1,5 +1,6 @@
 import { makeDraggable } from './draggable';
-import { morph, onPageReady, EASE } from '../animations';
+import { lockScroll as lock, unlockScroll as unlock } from './scroll-lock';
+import { morph, onPageReady, EASE, getWindowAnimProfile } from '../animations';
 
 type WindowState = 'normal' | 'fullscreen' | 'minimized';
 
@@ -30,37 +31,24 @@ function getFocusable(el: HTMLElement): HTMLElement[] {
   );
 }
 
-function lockScroll() {
-  if (document.body.style.overflow === 'hidden') return;
-  const gap = window.innerWidth - document.documentElement.clientWidth;
-  if (gap > 0) document.body.style.paddingRight = gap + 'px';
-  document.body.style.overflow = 'hidden';
-}
-
-function unlockScroll() {
-  document.body.style.overflow = '';
-  document.body.style.paddingRight = '';
-}
+const lockScroll = () => lock('windows');
+const unlockScroll = () => unlock('windows');
 
 function pruneDetached() {
-  let anyOpen = false;
-  for (const [el, entry] of windows) {
-    if (!el.isConnected) {
-      windows.delete(el);
-      continue;
-    }
-    if (entry.state !== 'minimized') anyOpen = true;
+  for (const [el] of windows) {
+    if (!el.isConnected) windows.delete(el);
   }
   if (focused && !focused.isConnected) focused = null;
   if (activeBackdrop && !activeBackdrop.isConnected) activeBackdrop = null;
-  if (!anyOpen) unlockScroll();
+  if (!windows.size) unlockScroll();
 }
 
 function syncFocusChrome() {
   if (!activeBackdrop) return;
   const lit = focused !== null;
   activeBackdrop.classList.toggle('is-open', lit);
-  lit ? lockScroll() : unlockScroll();
+  if (lit) lockScroll();
+  else unlockScroll();
   for (const [el] of windows) el.classList.toggle('is-focused', el === focused);
 }
 
@@ -145,8 +133,9 @@ function applyState(win: HTMLElement, next: WindowState) {
   }
 
   const to = win.getBoundingClientRect();
-  const ease = next === 'minimized' ? EASE.snappy : EASE.bouncy;
-  const duration = next === 'minimized' ? 0.28 : 0.36;
+  const profile = getWindowAnimProfile();
+  const ease = next === 'minimized' ? EASE[profile.minimizeEase] : EASE[profile.morphEase];
+  const duration = next === 'minimized' ? profile.minimizeDuration : profile.morphDuration;
 
   const result = morph(win, from, to, { duration, ease, counterScale: [titlebar] });
   if (!result) return;
@@ -208,7 +197,7 @@ function open(win: HTMLElement, trigger: HTMLButtonElement, backdrop: HTMLElemen
   if (!isMobile()) {
     const offset = visibleCount() * STAGGER;
     win.style.transition = 'none';
-    win.style.left = `calc(50% + ${offset}px)`;
+    win.style.left = `calc(50vw + ${offset}px)`;
     win.style.top = `calc(50% + ${offset}px)`;
     win.style.translate = '-50% -50%';
     win.style.transform = '';
@@ -227,7 +216,15 @@ function open(win: HTMLElement, trigger: HTMLButtonElement, backdrop: HTMLElemen
     win.classList.remove('is-opening');
     win.offsetHeight;
     win.classList.add('is-opening');
-    window.setTimeout(() => win.classList.remove('is-opening'), 520);
+    let guard = 0;
+    const done = (e?: AnimationEvent) => {
+      if (e && e.target !== win) return;
+      window.clearTimeout(guard);
+      win.removeEventListener('animationend', done);
+      win.classList.remove('is-opening');
+    };
+    win.addEventListener('animationend', done);
+    guard = window.setTimeout(done, 1000);
   }
 
   const focusable = getFocusable(win);

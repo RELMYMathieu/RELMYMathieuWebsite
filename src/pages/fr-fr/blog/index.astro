@@ -1,11 +1,12 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import Section from '../../../components/Section.astro';
-import { useTranslations } from '../../../i18n/utils';
+import { useTranslations, useTranslatedPath } from '../../../i18n/utils';
 import { getCollection, render } from 'astro:content';
 
 const lang = 'fr-fr';
 const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
 
 const rawPosts = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`)))
   .sort((a, b) => (b.data.published?.getTime() ?? 0) - (a.data.published?.getTime() ?? 0));
@@ -24,7 +25,10 @@ const posts = await Promise.all(
 <Layout title={t('blog.title')} description="Le blog de Relmy Mathieu, pensées, notes, bref.">
   <Section delay={0}>
     <h1 class="text-2xl font-bold mb-1">{t('blog.title')}</h1>
-    <p class="text-subtle text-sm">{t('blog.subtitle')}</p>
+    <p class="blog-tagline text-subtle text-sm">
+      {t('blog.subtitle')}
+      <a class="blog-feed" href={translatePath('/rss.xml')} aria-label={t('blog.feedLabel')}>{t('blog.feed')}</a>
+    </p>
   </Section>
 
   {posts.length === 0 ? (
@@ -89,6 +93,9 @@ const posts = await Promise.all(
             <span class="ww-meta-empty">{t('blog.notUpdated')}</span>
           )}
         </p>
+        <div class="ww-links">
+          <a href={translatePath(`/blog/${p.slug}`)} class="ww-link">{t('blog.permalink')}</a>
+        </div>
         <div class="prose-mdx">
           <p.Content />
         </div>
@@ -98,6 +105,23 @@ const posts = await Promise.all(
 ))}
 
 <style>
+  .blog-tagline {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .blog-feed {
+    color: var(--text-subtle);
+    opacity: 0.75;
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+
+  .blog-feed:hover {
+    opacity: 1;
+    color: var(--text-main);
+  }
+
   .blog-list {
     list-style: none;
     padding: 0;

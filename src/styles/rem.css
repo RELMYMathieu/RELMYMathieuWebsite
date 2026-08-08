@@ -1,0 +1,90 @@
+[data-theme='rem'] {
+  color-scheme: light;
+
+  --theme-swatch: oklch(0.75 0.125 248);
+
+  --grad-pos: 50% 65%;
+  --grad-stop-2: 40%;
+  --grad-1: oklch(0.85 0.062 240);
+  --grad-2: oklch(0.85 0.062 240);
+  --grad-3: oklch(0.85 0.062 240);
+
+  --text-main: oklch(0.235 0.030 256);
+  --text-muted: oklch(0.415 0.044 256);
+  --text-subtle: oklch(0.395 0.122 248);
+
+  --surface-bg: oklch(0.85 0.062 240);
+  --menu-bg: oklch(0.895 0.042 240);
+  --border: oklch(0.72 0.078 244);
+  --border-hover: oklch(0.525 0.135 250);
+
+  --sheen: oklch(0.75 0.125 248 / 0.26);
+  --well-bg: oklch(0.58 0.125 250 / 0.15);
+  --code-bg: oklch(0.75 0.125 248 / 0.30);
+  --scrim: oklch(0.235 0.030 256 / 0.35);
+  --scrim-heavy: oklch(0.235 0.030 256 / 0.82);
+
+  --accent: oklch(0.52 0.15 210);
+
+  --hint-border: oklch(0.52 0.15 210);
+  --hint-bg: oklch(0.235 0.030 256);
+  --hint-fg: oklch(0.93 0.02 70);
+
+  --prompt-dim: 0.72;
+
+  --lightbox-img-border: oklch(0.525 0.135 250);
+  --lightbox-caption: oklch(0.415 0.044 256);
+
+  --ww-bg: oklch(0.895 0.042 240 / 0.72);
+  --ww-fg: oklch(0.235 0.030 256);
+  --ww-muted: oklch(0.415 0.044 256);
+  --ww-prompt: oklch(0.395 0.122 248);
+  --ww-bg-solid: oklch(0.895 0.042 240);
+
+  --console-bg: oklch(0.895 0.042 240 / 0.68);
+  --console-fg: oklch(0.235 0.030 256);
+  --console-border: oklch(0.72 0.078 244 / 0.55);
+  --console-prompt: oklch(0.395 0.122 248);
+  --console-radius: 16px;
+  --console-shadow: 0 22px 48px -18px oklch(0.235 0.030 256 / 0.4);
+  --console-backdrop-filter: blur(18px) saturate(175%);
+  --console-bg-solid: oklch(0.895 0.042 240);
+
+  --ww-body-bg: none;
+  --ww-titlebar-bg: none;
+  --ww-titlebar-shadow: none;
+  --ww-titlebar-text-shadow: none;
+
+  --ww-ctrl-fg: inherit;
+  --ww-ctrl-opacity: 0.6;
+  --ww-ctrl-radius: 0;
+  --ww-ctrl-bg: none;
+  --ww-ctrl-bg-hover: none;
+  --ww-ctrl-glow-hover: none;
+  --ww-ctrl-bg-active: none;
+  --ww-ctrl-glow-active: none;
+
+  --ww-close-bg: none;
+  --ww-close-bg-hover: none;
+  --ww-close-glow-hover: none;
+  --ww-close-bg-active: none;
+
+  --ww-glyph-fill: transparent;
+  --ww-close-glyph-fill: transparent;
+  --ww-glyph-minimize: none;
+  --ww-glyph-maximize: none;
+  --ww-glyph-restore: none;
+  --ww-glyph-close: none;
+
+  --ww-shadow-drag: var(--console-shadow);
+  --ww-drag-scale: 1;
+
+  --focus-outline: 2px dashed currentColor;
+  --focus-glow: none;
+
+  --sb-width: auto;
+  --sb-color: auto;
+  --sb-track: none;
+  --sb-thumb: none;
+  --sb-thumb-hover: none;
+}

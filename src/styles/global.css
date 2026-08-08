@@ -1,6 +1,9 @@
 @import "tailwindcss";
-@import "./themes.css";
+@import "./slate.css";
+@import "./rem.css";
+@import "./ram.css";
 @import "./window.css";
+@import "./aero.css";
 
 @theme {
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
@@ -24,6 +27,27 @@
   initial-value: #101013;
 }
 
+html {
+  background-color: var(--surface-bg);
+  background-image: radial-gradient(
+    110% 78% at var(--grad-pos, 50% 22%),
+    var(--grad-1) 0%,
+    var(--grad-2) var(--grad-stop-2, 45%),
+    var(--grad-3) 100%
+  );
+  background-repeat: no-repeat;
+}
+
+html.is-scroll-locked {
+  overflow: hidden;
+  padding-right: var(--sb-gutter, 0px);
+}
+
+.is-scroll-locked .nav-bar,
+.is-scroll-locked .status-bar {
+  margin-right: calc(0px - var(--sb-gutter, 0px));
+}
+
 :root {
   --radius: 4px;
   --radius-lg: 8px;
@@ -36,20 +60,9 @@
 }
 
 body {
-  background-color: var(--surface-bg);
-  background-image: radial-gradient(
-    110% 78% at var(--grad-pos, 50% 22%),
-    var(--grad-1) 0%,
-    var(--grad-2) var(--grad-stop-2, 45%),
-    var(--grad-3) 100%
-  );
-  background-repeat: no-repeat;
   color: var(--text-main);
 }
 
-/* `color` is excluded, animating it hits the text layer,
-   dropping subpixel antialiasing until the fade ends and snapping it back.
-   it looks pretty bad when that happens */
 .theme-transition {
   transition-property: --grad-1, --grad-2, --grad-3, background-color, border-color !important;
   transition-duration: var(--theme-fade) !important;
@@ -69,7 +82,11 @@ body {
   color: var(--text-main);
   letter-spacing: 0.02em;
   margin-bottom: 0.25rem;
-  opacity: 0.55;
+  opacity: var(--prompt-dim, 0.55);
+}
+
+.prompt-sep {
+  white-space: pre;
 }
 
 .text-main {
@@ -84,7 +101,26 @@ body {
   color: var(--text-subtle);
 }
 
-/* ── Dashed hint tooltips (shared across pages) ── */
+.section-heading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--heading, var(--text-subtle));
+  margin-bottom: 0.75rem;
+  text-wrap: balance;
+}
+
+.prose-measure {
+  max-width: 68ch;
+}
+
+.fact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
 
 .dashed-hint {
   position: relative;
@@ -132,8 +168,6 @@ button.dashed-hint {
     max-width: min(15rem, 80vw);
   }
 }
-
-/* -- Prose (rendered MDX content and other cool things...) -- */
 
 .prose-mdx {
   line-height: 1.65;
@@ -256,14 +290,10 @@ button.dashed-hint {
   margin: 1rem 0;
 }
 
-/* ── View transitions ── */
-
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.1s;
 }
-
-/* ── Fade-in initial state (motion.dev) ── */
 
 @media (prefers-reduced-motion: no-preference) {
   [data-fade-in] {
@@ -271,8 +301,6 @@ button.dashed-hint {
     transform: translateY(10px);
   }
 }
-
-/* ── Reduced motion ── */
 
 @media (prefers-reduced-motion: reduce) {
   :root {
@@ -299,7 +327,16 @@ button.dashed-hint {
   }
 }
 
-/* ── "sudo rm -rf /" easter egg ── */
+@media (prefers-reduced-transparency: reduce) {
+  .ww::after,
+  .ww-backdrop.is-open {
+    backdrop-filter: none;
+  }
+
+  .ww::after {
+    background: var(--ww-bg-solid, var(--ww-bg));
+  }
+}
 
 html[data-deleted='1'] body > *:not(#rm-rf-overlay) {
   visibility: hidden;

@@ -5,11 +5,13 @@ import { useTranslations } from '../../i18n/utils';
 
 export async function GET(context: APIContext) {
   const t = useTranslations('fr-fr');
+  const site = context.site ?? new URL('https://relmymathieu.me');
   return rss({
     title: `Relmy Mathieu - ${t('blog.title')}`,
     description: t('blog.subtitle'),
-    site: context.site ?? 'https://relmymathieu.me',
-    items: await getFeedItems('fr-fr'),
+    site,
+    items: await getFeedItems('fr-fr', site),
+    stylesheet: '/rss/styles.xsl',
     customData: '<language>fr-fr</language>',
   });
 }

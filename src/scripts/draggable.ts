@@ -11,13 +11,42 @@ export function makeDraggable(
   let pending = false;
   let pendingX = 0, pendingY = 0;
   let startX = 0, startY = 0, startLeft = 0, startTop = 0;
-  let winW = 0, winH = 0, handleH = 0;
+  let winW = 0, winH = 0, handleH = 0, minTop = 0;
+
+  function topBoundary(): number {
+    const bar = document.querySelector<HTMLElement>('.nav-bar');
+    if (!bar) return 0;
+    const pos = getComputedStyle(bar).position;
+    if (pos !== 'sticky' && pos !== 'fixed') return 0;
+    return Math.max(0, bar.getBoundingClientRect().bottom);
+  }
+  let frame = 0;
+  let queuedLeft = 0, queuedTop = 0;
+
+  function commit() {
+    frame = 0;
+    win.style.left = queuedLeft + 'px';
+    win.style.top = queuedTop + 'px';
+  }
+
+  function queuePosition(left: number, top: number) {
+    queuedLeft = left;
+    queuedTop = top;
+    if (!frame) frame = requestAnimationFrame(commit);
+  }
+
+  function flushPosition() {
+    if (!frame) return;
+    cancelAnimationFrame(frame);
+    commit();
+  }
 
   function measure() {
     const r = win.getBoundingClientRect();
     winW = r.width;
     winH = r.height;
     handleH = handle.getBoundingClientRect().height || 32;
+    minTop = topBoundary();
     return r;
   }
 
@@ -30,7 +59,6 @@ export function makeDraggable(
     const vh = window.innerHeight;
     const minLeft = MIN_VISIBLE - winW;
     const maxLeft = vw - MIN_VISIBLE;
-    const minTop = 0;
     const maxTop = vh - handleH;
     return [
       Math.min(Math.max(left, minLeft), maxLeft),
@@ -40,9 +68,6 @@ export function makeDraggable(
 
   function confirmDrag(clientX: number, clientY: number) {
     const preRect = win.getBoundingClientRect();
-    // horizontal offset as a fraction of the pre-drag width: a window that shrinks
-    // (e.g. leaving fullscreen) still anchors the cursor to the same relative spot
-    // on its titlebar, instead of an absolute pixel offset that may not fit anymore
     const fracX = preRect.width ? (pendingX - preRect.left) / preRect.width : 0;
     const offsetY = pendingY - preRect.top;
 
@@ -74,14 +99,14 @@ export function makeDraggable(
       startLeft + (clientX - startX),
       startTop + (clientY - startY),
     );
-    win.style.left = left + 'px';
-    win.style.top = top + 'px';
+    queuePosition(left, top);
   }
 
   function stopDrag() {
     pending = false;
     if (!dragging) return;
     dragging = false;
+    flushPosition();
     win.classList.remove('is-dragging');
   }
 
@@ -112,6 +137,7 @@ export function makeDraggable(
   document.addEventListener('touchend', stopDrag);
 
   window.addEventListener('resize', () => {
+    flushPosition();
     if (!win.style.left || !win.style.top) return;
     measure();
     const [left, top] = clamp(parseInt(win.style.left) || 0, parseInt(win.style.top) || 0);

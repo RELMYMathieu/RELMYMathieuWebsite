@@ -2,16 +2,20 @@
 interface Props {
   class?: string;
   dashed?: boolean;
+  bare?: boolean;
+  bleed?: boolean;
   delay?: number;
 }
 
-const { class: className, dashed = false, delay = 0 } = Astro.props;
+const { class: className, dashed = false, bare = false, bleed = false, delay = 0 } = Astro.props;
 ---
 
 <section
   class:list={[
     'section-card',
     dashed && 'section-card--dashed',
+    bare && 'section-card--bare',
+    bleed && 'section-card--bleed',
     className,
   ]}
   data-fade-in
@@ -53,5 +57,28 @@ const { class: className, dashed = false, delay = 0 } = Astro.props;
 
   .section-card--dashed {
     border-style: dashed;
+  }
+
+  .section-card--bare {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+
+  .section-card--bare + .section-card--bare {
+    border-top: 1px var(--divider-style, dashed) var(--divider-color, var(--border));
+    box-shadow: var(--divider-shadow, none);
+    padding-top: 2rem;
+  }
+
+  .section-card--bare::before {
+    display: none;
+  }
+
+  .section-card--bleed {
+    margin-inline: -1.5rem;
+    margin-bottom: 1.5rem;
+    padding-inline: calc(1.5rem - 1px);
   }
 </style>

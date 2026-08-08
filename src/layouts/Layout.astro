@@ -9,8 +9,11 @@ import CommandBar from '../components/CommandBar.astro';
 import { BUILD_TIME } from '../utils/buildTime';
 import { LOCATION } from '../config/location';
 import { WEATHER_BUCKETS } from '../config/weather';
+import { MOOD_LINE_KEYS, MOOD_PHASES, PHASE_BY_HOUR, DEFAULT_PHASE } from '../config/mood';
+import { ageFromBirthday, BIRTHDAY } from '../utils/age';
 
 const themeCodes = THEMES.map((t) => t.code);
+const moodHours = [...PHASE_BY_HOUR];
 
 interface Props {
   title: string;
@@ -46,19 +49,52 @@ const buildTimeFormatted = `${new Intl.DateTimeFormat(htmlLang, {
 const weatherLabels = Object.fromEntries(
   WEATHER_BUCKETS.map((bucket) => [bucket, t(`weather.${bucket}`)]),
 );
+
+const age = ageFromBirthday(BIRTHDAY);
+const moodLines = Object.fromEntries(
+  MOOD_LINE_KEYS.map((key) => [
+    key,
+    t(`mood.${key}`)
+      .split('\n')
+      .map((line) => line.replace(/\{city\}/g, LOCATION.city).replace(/\{age\}/g, String(age))),
+  ]),
+);
+const moodPhaseLabels = Object.fromEntries(
+  MOOD_PHASES.map((phase) => [phase, t(`mood.phase.${phase}`)]),
+);
 ---
 
 <html lang={htmlLang}>
   <head>
     <script
       is:inline
-      define:vars={{ themeCodes, fallback: DEFAULT_THEME, storageKey: THEME_STORAGE_KEY }}
+      define:vars={{
+        themeCodes,
+        fallback: DEFAULT_THEME,
+        storageKey: THEME_STORAGE_KEY,
+        moodHours,
+        moodTz: LOCATION.timeZone,
+        moodFallback: DEFAULT_PHASE,
+      }}
     >
       try {
         const stored = localStorage.getItem(storageKey);
         document.documentElement.dataset.theme = themeCodes.includes(stored) ? stored : fallback;
       } catch {
         document.documentElement.dataset.theme = fallback;
+      }
+
+      try {
+        const hour = Number(
+          new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit',
+            hourCycle: 'h23',
+            timeZone: moodTz,
+          }).format(new Date()),
+        );
+        document.documentElement.dataset.moodPhase = moodHours[hour] ?? moodFallback;
+      } catch {
+        document.documentElement.dataset.moodPhase = moodFallback;
       }
     </script>
     <meta charset="utf-8" />
@@ -70,7 +106,7 @@ const weatherLabels = Object.fromEntries(
       rel="alternate"
       type="application/rss+xml"
       title={`Relmy Mathieu - ${t('blog.title')}`}
-      href={translatePath('/rss.xml')}
+      href={new URL(translatePath('/rss.xml'), Astro.site ?? canonical)}
     />
 
     <title>{title} - Relmy Mathieu</title>
@@ -99,7 +135,14 @@ const weatherLabels = Object.fromEntries(
     </noscript>
   </head>
   <body class="min-h-screen flex flex-col font-mono">
-    <div id="boot-screen" aria-hidden="true" data-lines={t('boot.lines')}>
+    <div
+      id="boot-screen"
+      aria-hidden="true"
+      data-lines={t('boot.lines')}
+      data-last-login={t('boot.lastLogin')}
+      data-first-login={t('boot.firstLogin')}
+      data-login-locale={htmlLang}
+    >
       <div id="boot-lines"></div>
     </div>
     <a href="#main-content" class="skip-link">{t('nav.skip')}</a>
@@ -192,7 +235,11 @@ const weatherLabels = Object.fromEntries(
         data-uptime-label={t('footer.uptimeLabel')}
         data-tip={t('footer.uptimeTip').replace('{time}', buildTimeFormatted)}
       ></span>
-      <span class="status-seg status-seg--muted">{t('footer.status')}</span>
+      <span
+        class="status-seg status-seg--muted status-seg--line"
+        id="status-line"
+        data-mood-lines={JSON.stringify(moodLines)}
+      >{t('footer.status')}</span>
       <span class="status-seg status-seg--muted" id="footer-kaomoji" aria-hidden="true">(｡･∀･)ﾉﾞ</span>
     </footer>
     <script>
@@ -205,6 +252,8 @@ const weatherLabels = Object.fromEntries(
       import '../scripts/boot';
       import '../scripts/kaomoji';
       import '../scripts/now-playing';
+      import '../scripts/mood';
+      import '../scripts/last-login';
     </script>
   </body>
 </html>
@@ -302,7 +351,7 @@ const weatherLabels = Object.fromEntries(
     visibility: hidden;
     transition:
       opacity 0.16s ease,
-      clip-path 0.24s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      clip-path 0.24s var(--menu-ease, cubic-bezier(0.05, 0.9, 0.1, 1.05)),
       visibility 0s linear 0.24s;
   }
 
@@ -313,7 +362,7 @@ const weatherLabels = Object.fromEntries(
     visibility: visible;
     transition:
       opacity 0.16s ease,
-      clip-path 0.24s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      clip-path 0.24s var(--menu-ease, cubic-bezier(0.05, 0.9, 0.1, 1.05)),
       visibility 0s linear 0s;
   }
 
@@ -388,6 +437,13 @@ const weatherLabels = Object.fromEntries(
     opacity: 0.85;
   }
 
+  .status-seg--line {
+    white-space: normal;
+    text-align: center;
+    max-width: min(34rem, 100%);
+    text-wrap: balance;
+  }
+
   .nav-clock {
     font-size: 0.75rem;
     color: var(--text-subtle);
@@ -422,7 +478,6 @@ const weatherLabels = Object.fromEntries(
     display: inline-block;
   }
 
-  /* TODO : Could improve the looks to show it more lively, like "HEY THERES SOMETHING HOVERABLE THERE" */
   .nav-np.is-playing .nav-np__glyph {
     animation: np-pulse 2.4s ease-in-out infinite;
   }
@@ -465,7 +520,7 @@ const weatherLabels = Object.fromEntries(
     visibility: hidden;
     transition:
       opacity 0.16s ease,
-      clip-path 0.24s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      clip-path 0.24s var(--menu-ease, cubic-bezier(0.05, 0.9, 0.1, 1.05)),
       visibility 0s linear 0.24s;
   }
 
@@ -478,7 +533,7 @@ const weatherLabels = Object.fromEntries(
     visibility: visible;
     transition:
       opacity 0.16s ease,
-      clip-path 0.24s cubic-bezier(0.05, 0.9, 0.1, 1.05),
+      clip-path 0.24s var(--menu-ease, cubic-bezier(0.05, 0.9, 0.1, 1.05)),
       visibility 0s linear 0s;
   }
 

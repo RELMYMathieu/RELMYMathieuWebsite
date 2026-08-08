@@ -163,10 +163,11 @@ function render(el: HTMLElement): void {
   if (elapsed === null || !data.durationMs) return;
 
   const track = document.createElement('span');
-  track.className = 'np-progress';
+  track.className = playing ? 'np-progress' : 'np-progress is-paused';
   const bar = document.createElement('span');
   bar.className = 'np-bar';
   if (!playing || prefersReducedMotion()) {
+    bar.style.animationName = 'none';
     bar.style.transform = `scaleX(${elapsed / data.durationMs})`;
   } else {
     bar.style.animationDuration = `${data.durationMs}ms`;

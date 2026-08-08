@@ -32,8 +32,8 @@
 
   --prompt-dim: 0.72;
 
-  --lightbox-img-border: oklch(0.525 0.135 250);
-  --lightbox-caption: oklch(0.415 0.044 256);
+  --lightbox-img-border: oklch(0.72 0.078 244);
+  --lightbox-caption: oklch(0.75 0.125 248);
 
   --ww-bg: oklch(0.895 0.042 240 / 0.72);
   --ww-fg: oklch(0.235 0.030 256);

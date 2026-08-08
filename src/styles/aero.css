@@ -698,8 +698,10 @@
   text-transform: none;
   letter-spacing: normal;
   font-family: var(--chrome-font);
-  color: var(--ww-titlebar-fg);
-  text-shadow: var(--ww-titlebar-text-shadow);
+  color: oklch(0.980 0.006 230);
+  text-shadow:
+    0 1px 1px oklch(0 0 0 / 0.68),
+    0 0 2px oklch(0 0 0 / 0.30);
 }
 
 [data-theme='aero'] body .lightbox-close {
@@ -730,8 +732,8 @@
   margin-top: 0;
   padding: 0.5rem 0.15rem 0.1rem;
   font-family: var(--chrome-font);
-  color: oklch(0.360 0.050 250);
-  text-shadow: 0 0 4px oklch(1 0 0);
+  color: oklch(0.950 0.010 230);
+  text-shadow: 0 1px 1px oklch(0 0 0 / 0.58);
 }
 
 [data-theme='aero'] body .work-item,

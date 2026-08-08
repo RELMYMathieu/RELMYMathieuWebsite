@@ -14,13 +14,17 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^5.0.3",
+    "@astrojs/mdx": "^7.0.5",
     "@astrojs/rss": "^4.0.19",
-    "@astrojs/sitemap": "^3.7.2",
-    "@fontsource-variable/jetbrains-mono": "^5.2.8",
-    "@tailwindcss/vite": "^4.2.2",
-    "astro": "^6.1.2",
+    "@astrojs/sitemap": "^3.7.3",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.0",
     "motion": "^12.38.0",
-    "tailwindcss": "^4.2.2"
+    "sanitize-html": "^2.17.6",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/sanitize-html": "^2.16.1"
   }
 }

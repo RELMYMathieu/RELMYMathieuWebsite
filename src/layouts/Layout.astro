@@ -6,6 +6,7 @@ import { getLangFromUrl, useTranslations, useTranslatedPath, getRawPath } from '
 import { LOCALES, getLocale } from '../i18n/config';
 import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from '../theme/config';
 import CommandBar from '../components/CommandBar.astro';
+import ThemePicker from '../components/ThemePicker.astro';
 import { BUILD_TIME } from '../utils/buildTime';
 import { LOCATION } from '../config/location';
 import { WEATHER_BUCKETS } from '../config/weather';
@@ -172,31 +173,16 @@ const moodPhaseLabels = Object.fromEntries(
           data-weather-labels={JSON.stringify(weatherLabels)}
         >[{LOCATION.city} --:--]</span>
         <CommandBar lang={lang} />
-        <div class="dropdown" id="theme-dropdown">
-          <button
-            id="theme-toggle"
-            type="button"
-            aria-haspopup="menu"
-            aria-controls="theme-menu"
-            aria-expanded="false"
-            aria-label={t('theme.label')}
-            data-label-base={t('theme.label')}
-            class="nav-link cursor-pointer"
-          >[<span class="theme-swatch"></span> ▾]</button>
-          <div class="dropdown-menu" id="theme-menu" role="menu" aria-label={t('theme.label')} aria-hidden="true">
-            {THEMES.map((th) => (
-              <button
-                type="button"
-                role="menuitemradio"
-                aria-checked="false"
-                class="dropdown-option theme-option"
-                data-theme-code={th.code}
-              >
-                <span class="theme-swatch" style={`--swatch: ${th.swatch}`}></span>{th.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <button
+          id="theme-trigger"
+          type="button"
+          data-ww-trigger
+          aria-haspopup="dialog"
+          aria-controls="ww-theme"
+          aria-label={t('theme.label')}
+          data-label-base={t('theme.label')}
+          class="nav-link cursor-pointer"
+        >[<span class="theme-trigger__word">{t('theme.button')} </span><span class="theme-swatch"></span>]</button>
         <div class="dropdown" id="lang-dropdown">
           <button
             id="lang-toggle"
@@ -225,6 +211,8 @@ const moodPhaseLabels = Object.fromEntries(
     <main id="main-content" class="flex-1 w-full max-w-3xl mx-auto px-6 py-10">
       <slot />
     </main>
+    <div class="ww-backdrop" id="ww-backdrop" aria-hidden="true"></div>
+    <ThemePicker lang={lang} />
     <footer class="status-bar">
       <span class="status-seg status-seg--muted">{t('footer.credit')}</span>
       <span
@@ -244,7 +232,7 @@ const moodPhaseLabels = Object.fromEntries(
     </footer>
     <script>
       import '../scripts/theme';
-      import '../scripts/theme-dropdown';
+      import '../scripts/theme-picker';
       import '../scripts/lang-dropdown';
       import '../scripts/clock';
       import '../scripts/fade-in';
@@ -387,20 +375,6 @@ const moodPhaseLabels = Object.fromEntries(
 
   .dropdown-option--active {
     font-weight: 700;
-  }
-
-  .theme-option {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    background: none;
-    border: none;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    text-align: left;
-    white-space: nowrap;
   }
 
   .theme-swatch {
@@ -606,5 +580,9 @@ const moodPhaseLabels = Object.fromEntries(
 
   @media (max-width: 480px) {
     .nav-clock { display: none; }
+  }
+
+  @media (max-width: 420px) {
+    .theme-trigger__word { display: none; }
   }
 </style>

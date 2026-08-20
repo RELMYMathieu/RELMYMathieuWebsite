@@ -1,0 +1,312 @@
+---
+import { THEMES } from '../theme/config';
+import { useTranslations, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<div
+  id="ww-theme"
+  class="ww"
+  role="dialog"
+  aria-modal="true"
+  aria-hidden="true"
+  aria-labelledby="ww-label-theme"
+  tabindex="-1"
+>
+  <div class="ww-titlebar" data-drag-handle>
+    <span class="ww-titlebar__prompt" aria-hidden="true">theme@relmymathieu</span>
+    <span class="ww-titlebar__sep" aria-hidden="true">:</span>
+    <span class="ww-titlebar__path" id="ww-label-theme">~/.config/theme</span>
+    <div class="ww-controls">
+      <button class="ww-ctrl ww-ctrl--desktop" data-action="minimize" type="button" aria-label={t('ww.minimize')}>[−]</button>
+      <button class="ww-ctrl ww-ctrl--desktop" data-action="fullscreen" type="button" aria-label={t('ww.fullscreen')}>[□]</button>
+      <button class="ww-ctrl" data-action="close" type="button" aria-label={t('theme.close')}>[×]</button>
+    </div>
+  </div>
+  <div class="ww-body">
+    <div class="ww-content">
+      <div class="theme-grid" id="theme-grid" role="group" aria-label={t('theme.group')}>
+        {THEMES.map((th) => (
+          <button
+            type="button"
+            class="theme-card"
+            aria-pressed="false"
+            data-theme-code={th.code}
+          >
+            <span class="theme-preview" data-theme={th.code} aria-hidden="true">
+              <span class="tp-nav">
+                <span class="tp-bar tp-bar--nav"></span>
+                <span class="tp-bar tp-bar--nav tp-bar--short"></span>
+                <span class="tp-dot"></span>
+              </span>
+              <span class="tp-win">
+                <span class="tp-win__bar">
+                  <span class="tp-bar tp-bar--prompt"></span>
+                  <span class="tp-ctrls">
+                    <span class="tp-ctrl"></span>
+                    <span class="tp-ctrl"></span>
+                    <span class="tp-ctrl"></span>
+                  </span>
+                </span>
+                <span class="tp-win__body">
+                  <span class="tp-bar tp-bar--body"></span>
+                  <span class="tp-bar tp-bar--body tp-bar--muted"></span>
+                  <span class="tp-bar tp-bar--body tp-bar--short tp-bar--muted"></span>
+                </span>
+              </span>
+              <span class="tp-status">
+                <span class="tp-bar tp-bar--status"></span>
+                <span class="tp-bar tp-bar--status tp-bar--short"></span>
+              </span>
+            </span>
+            <span class="theme-card__row">
+              <span class="theme-swatch" style={`--swatch: ${th.swatch}`}></span>
+              <span class="theme-card__name">{th.label}</span>
+              <span class="theme-card__mark" aria-hidden="true"></span>
+            </span>
+            <span class="theme-card__desc">{t(`theme.desc.${th.code}`)}</span>
+          </button>
+        ))}
+      </div>
+      <p class="ww-stack">{t('theme.hint')}</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import '../scripts/window-manager';
+  import '../scripts/theme-picker';
+</script>
+
+<style>
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.75rem;
+  }
+
+  .theme-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.5rem;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.18s ease;
+  }
+
+  .theme-card:hover {
+    border-color: var(--border-hover);
+  }
+
+  .theme-card[aria-pressed='true'] {
+    border-style: solid;
+    border-color: var(--border-hover);
+  }
+
+  .theme-card:focus-visible {
+    outline: var(--focus-outline, 2px dashed currentColor);
+    outline-offset: 2px;
+  }
+
+  .theme-card__row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+  }
+
+  .theme-swatch {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--swatch, var(--theme-swatch));
+  }
+
+  .theme-card__mark {
+    margin-left: auto;
+    font-size: 0.7rem;
+    opacity: 0.4;
+  }
+
+  .theme-card__mark::after {
+    content: '[ ]';
+  }
+
+  .theme-card[aria-pressed='true'] .theme-card__mark {
+    opacity: 1;
+    color: var(--ww-prompt);
+  }
+
+  .theme-card[aria-pressed='true'] .theme-card__mark::after {
+    content: '[*]';
+  }
+
+  .theme-card__desc {
+    font-size: 0.7rem;
+    line-height: 1.45;
+    color: var(--ww-muted);
+  }
+
+  .theme-preview {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--surface-bg);
+    background-image: radial-gradient(
+      110% 78% at var(--grad-pos, 50% 22%),
+      var(--grad-1) 0%,
+      var(--grad-2) var(--grad-stop-2, 45%),
+      var(--grad-3) 100%
+    );
+  }
+
+  .tp-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 14px;
+    padding-inline: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tp-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 11px;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+  }
+
+  .tp-dot {
+    width: 4px;
+    height: 4px;
+    margin-left: auto;
+    border-radius: 50%;
+    background-color: var(--theme-swatch);
+  }
+
+  .tp-bar {
+    display: block;
+    height: 3px;
+    border-radius: 1px;
+    background: var(--text-main);
+  }
+
+  .tp-bar--nav {
+    width: 20px;
+    opacity: 0.6;
+  }
+
+  .tp-bar--status {
+    width: 16px;
+    height: 2px;
+    background: var(--text-subtle);
+    opacity: 0.55;
+  }
+
+  .tp-bar--prompt {
+    width: 26px;
+    background: var(--ww-prompt);
+    opacity: 0.85;
+  }
+
+  .tp-bar--body {
+    width: 100%;
+    background: var(--ww-fg);
+    opacity: 0.5;
+  }
+
+  .tp-bar--muted {
+    background: var(--ww-muted);
+    opacity: 0.4;
+  }
+
+  .tp-bar--nav.tp-bar--short {
+    width: 12px;
+  }
+
+  .tp-bar--status.tp-bar--short {
+    width: 10px;
+  }
+
+  .tp-bar--body.tp-bar--short {
+    width: 55%;
+  }
+
+  .tp-win {
+    position: absolute;
+    left: 13%;
+    right: 13%;
+    top: 30%;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--ww-bg);
+    backdrop-filter: var(--console-backdrop-filter, blur(0px));
+    box-shadow: 0 4px 10px -5px rgb(0 0 0 / 0.5);
+  }
+
+  .tp-win__bar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 12px;
+    padding-inline: 4px;
+    border-bottom: 1px solid var(--ww-titlebar-bd, var(--border));
+    background: var(--ww-titlebar-bg, none);
+    box-shadow: var(--ww-titlebar-shadow, none);
+  }
+
+  .tp-ctrls {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    padding: 1px 2px;
+    border: var(--ww-ctrl-group-bd, 0) solid var(--ww-ctrl-bd, transparent);
+    border-top: 0;
+    border-radius: 0 0 var(--ww-ctrl-radius, 0) var(--ww-ctrl-radius, 0);
+    background: var(--ww-ctrl-group-bg, none);
+  }
+
+  .tp-ctrl {
+    width: 4px;
+    height: 4px;
+    border-radius: 1px;
+    background: var(--ww-fg);
+    opacity: 0.5;
+  }
+
+  .tp-win__body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 4px;
+    background: var(--ww-body-bg, none);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .theme-card { transition: none; }
+  }
+</style>

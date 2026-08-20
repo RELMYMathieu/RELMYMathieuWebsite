@@ -58,8 +58,6 @@ const posts = await Promise.all(
   )}
 </Layout>
 
-<div class="ww-backdrop" id="ww-backdrop" aria-hidden="true"></div>
-
 {posts.map((p) => (
   <div
     id={`ww-blog-${p.slug}`}
@@ -205,7 +203,3 @@ const posts = await Promise.all(
     opacity: 0.7;
   }
 </style>
-
-<script>
-  import '../../../scripts/window-manager';
-</script>

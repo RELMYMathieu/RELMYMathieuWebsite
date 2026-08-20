@@ -35,6 +35,8 @@ export function setTheme(theme: Theme): void {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {}
+
+  document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
 }
 
 document.addEventListener('astro:after-swap', () => applyTheme(readStoredTheme()));

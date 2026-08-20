@@ -61,8 +61,6 @@ const works = await Promise.all(
   </ul>
 </Section>
 
-<div class="ww-backdrop" id="ww-backdrop" aria-hidden="true"></div>
-
 {works.map((w) => (
   <div
     id={`ww-${w.id}`}
@@ -196,7 +194,3 @@ const works = await Promise.all(
   }
 
 </style>
-
-<script>
-  import '../scripts/window-manager';
-</script>

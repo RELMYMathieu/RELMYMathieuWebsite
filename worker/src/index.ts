@@ -28,7 +28,7 @@ interface SpotifyTrack {
 }
 
 const DEFAULT_ORIGINS = ['https://relmymathieu.me', 'http://localhost:4321'];
-const CACHE_SECONDS = 5;
+const CACHE_SECONDS = 3;
 
 let token: { value: string; expiresAt: number } | null = null;
 let refreshToken: string | null = null;
@@ -55,7 +55,7 @@ function json(body: unknown, request: Request, env: Env, status = 200): Response
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': `public, max-age=${CACHE_SECONDS}`,
+      'cache-control': 'no-store',
       ...corsHeaders(request, env),
     },
   });

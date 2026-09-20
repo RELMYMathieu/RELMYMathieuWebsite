@@ -2,42 +2,52 @@
 [data-theme='slate'] {
   color-scheme: dark;
 
+  /* identity */
   --theme-swatch: #a1a1aa;
 
+  /* page background */
   --grad-1: #1e1e24;
   --grad-2: #18181b;
   --grad-3: #101013;
 
+  /* text */
   --text-main: #f4f4f5;
   --text-muted: #a1a1aa;
   --text-subtle: #a1a1aa;
 
+  /* surfaces */
   --surface-bg: #18181b;
   --menu-bg: #1e1e23;
   --border: #3f3f46;
   --border-hover: #71717a;
 
+  /* translucent fills */
   --sheen: rgba(255, 255, 255, 0.04);
   --well-bg: rgba(0, 0, 0, 0.3);
   --code-bg: rgba(255, 255, 255, 0.05);
   --scrim: rgba(0, 0, 0, 0.32);
   --scrim-heavy: rgba(0, 0, 0, 0.85);
 
+  /* accent */
   --accent: #4ade80;
 
+  /* dashed-hint tooltips */
   --hint-border: #9ca3af;
   --hint-bg: #0a0a0a;
   --hint-fg: #f4f4f5;
 
+  /* image lightbox */
   --lightbox-img-border: #52525b;
   --lightbox-caption: #e4e4e7;
 
+  /* window shell */
   --ww-bg: #1e1e23;
   --ww-fg: #f4f4f5;
   --ww-muted: #a1a1aa;
   --ww-prompt: #4ade80;
   --ww-bg-solid: #1e1e23;
 
+  /* command bar console */
   --console-bg: #000000;
   --console-fg: #ffffff;
   --console-border: #3f3f46;
@@ -47,11 +57,13 @@
   --console-backdrop-filter: blur(0px);
   --console-bg-solid: #000000;
 
+  /* window body and titlebar fills */
   --ww-body-bg: none;
   --ww-titlebar-bg: none;
   --ww-titlebar-shadow: none;
   --ww-titlebar-text-shadow: none;
 
+  /* window control buttons */
   --ww-ctrl-fg: inherit;
   --ww-ctrl-opacity: 0.6;
   --ww-ctrl-radius: 0;
@@ -61,11 +73,13 @@
   --ww-ctrl-bg-active: none;
   --ww-ctrl-glow-active: none;
 
+  /* close button */
   --ww-close-bg: none;
   --ww-close-bg-hover: none;
   --ww-close-glow-hover: none;
   --ww-close-bg-active: none;
 
+  /* control glyphs */
   --ww-glyph-fill: transparent;
   --ww-close-glyph-fill: transparent;
   --ww-glyph-minimize: none;
@@ -73,12 +87,15 @@
   --ww-glyph-restore: none;
   --ww-glyph-close: none;
 
+  /* window drag */
   --ww-shadow-drag: var(--console-shadow);
   --ww-drag-scale: 1;
 
+  /* keyboard focus ring */
   --focus-outline: 2px dashed currentColor;
   --focus-glow: none;
 
+  /* scrollbars */
   --sb-width: auto;
   --sb-color: auto;
   --sb-track: none;

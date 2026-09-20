@@ -1,10 +1,6 @@
 import { onPageReady, prefersReducedMotion } from '../animations';
-import {
-  NOW_PLAYING_ENDPOINT,
-  NOW_PLAYING_IDLE_POLL_MS,
-  NOW_PLAYING_OVERRUN_MS,
-  NOW_PLAYING_POLL_MS,
-} from '../config/services';
+import { bindNavMenu } from './nav-menu';
+import { NOW_PLAYING_ENDPOINT, NOW_PLAYING_POLL } from '../config/services';
 
 export type PlaybackState = 'playing' | 'paused' | 'last' | 'idle';
 
@@ -24,12 +20,13 @@ const STATES: readonly string[] = ['playing', 'paused', 'last', 'idle'];
 
 let cached: NowPlaying | null = null;
 let fetchedAt = 0;
-let interval: number | null = null;
+let timer: number | null = null;
 let earlyRefresh: number | null = null;
 let pending: Promise<NowPlaying | null> | null = null;
-let visibilityBound = false;
+let wakeBound = false;
 let reauthRequired = false;
-let pollEvery = 0;
+let signature = '';
+let idleDelay: number = NOW_PLAYING_POLL.idle;
 
 export const nowPlayingEnabled = NOW_PLAYING_ENDPOINT !== '';
 
@@ -38,9 +35,9 @@ export function needsReauth(): boolean {
 }
 
 function stopPolling(): void {
-  if (interval !== null) clearInterval(interval);
+  if (timer !== null) clearTimeout(timer);
   if (earlyRefresh !== null) clearTimeout(earlyRefresh);
-  interval = null;
+  timer = null;
   earlyRefresh = null;
 }
 
@@ -75,7 +72,10 @@ export async function fetchNowPlaying(): Promise<NowPlaying | null> {
 
   pending = (async () => {
     try {
-      const res = await fetch(NOW_PLAYING_ENDPOINT, { headers: { accept: 'application/json' } });
+      const res = await fetch(NOW_PLAYING_ENDPOINT, {
+        headers: { accept: 'application/json' },
+        cache: 'no-store',
+      });
 
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -182,46 +182,69 @@ function render(el: HTMLElement): void {
   renderTime(menu, data);
 }
 
+function isLiveSession(state: PlaybackState | undefined): boolean {
+  return state === 'playing' || state === 'paused';
+}
+
+function signatureOf(data: NowPlaying | null): string {
+  if (!data) return '';
+  return `${data.state}|${data.title ?? ''}|${data.artist ?? ''}`;
+}
+
+function nextDelay(): number {
+  return isLiveSession(cached?.state) ? NOW_PLAYING_POLL.live : idleDelay;
+}
+
 function scheduleEarlyRefresh(): void {
   if (earlyRefresh !== null) clearTimeout(earlyRefresh);
   earlyRefresh = null;
   if (cached?.state !== 'playing') return;
 
   if (hasOverrun(cached)) {
-    earlyRefresh = window.setTimeout(refresh, NOW_PLAYING_OVERRUN_MS);
+    earlyRefresh = window.setTimeout(refresh, NOW_PLAYING_POLL.overrun);
     return;
   }
 
   const remaining = remainingMs(cached);
-  if (remaining === null || remaining >= NOW_PLAYING_POLL_MS) return;
+  if (remaining === null || remaining >= NOW_PLAYING_POLL.live) return;
   earlyRefresh = window.setTimeout(refresh, remaining + 1000);
 }
 
+function schedule(): void {
+  if (timer !== null) clearTimeout(timer);
+  timer = null;
+  if (reauthRequired || document.visibilityState !== 'visible') return;
+  timer = window.setTimeout(refresh, nextDelay());
+}
+
 function refresh(): void {
-  void fetchNowPlaying().then(() => {
+  void fetchNowPlaying().then((data) => {
+    const next = signatureOf(data);
+    if (data && next !== signature) {
+      signature = next;
+      idleDelay = NOW_PLAYING_POLL.idle;
+    } else {
+      idleDelay = Math.min(idleDelay * 2, NOW_PLAYING_POLL.idleMax);
+    }
+
     const el = segment();
     if (el?.isConnected) render(el);
-    startPolling();
+    schedule();
     scheduleEarlyRefresh();
   });
 }
 
-function startPolling(): void {
-  const next = cached?.state === 'playing' ? NOW_PLAYING_POLL_MS : NOW_PLAYING_IDLE_POLL_MS;
-  if (interval !== null && pollEvery === next) return;
-
-  if (interval !== null) clearInterval(interval);
-  pollEvery = next;
-  interval = window.setInterval(() => {
-    if (document.visibilityState !== 'visible') return;
-    refresh();
-  }, next);
+function wake(): void {
+  if (!nowPlayingEnabled || reauthRequired) return;
+  idleDelay = NOW_PLAYING_POLL.idle;
+  if (Date.now() - fetchedAt < NOW_PLAYING_POLL.minGap) {
+    schedule();
+    return;
+  }
+  refresh();
 }
 
 function bindMenu(el: HTMLElement): void {
-  if (el.dataset.bound === '1') return;
-  el.dataset.bound = '1';
-
   let ticker: number | null = null;
 
   const tick = () => {
@@ -229,45 +252,33 @@ function bindMenu(el: HTMLElement): void {
     if (menu && cached) renderTime(menu, cached);
   };
 
-  const start = () => {
-    tick();
-    if (ticker !== null) return;
-    ticker = window.setInterval(tick, 1000);
-  };
+  bindNavMenu(el, {
+    onOpen: () => {
+      tick();
+      if (ticker !== null) return;
+      ticker = window.setInterval(tick, 1000);
+    },
+    onClose: () => {
+      if (ticker === null) return;
+      clearInterval(ticker);
+      ticker = null;
+    },
+  });
+}
 
-  const stop = () => {
-    if (el.classList.contains('is-pinned')) return;
-    if (ticker === null) return;
-    clearInterval(ticker);
-    ticker = null;
-  };
+function bindWakeSources(): void {
+  if (wakeBound) return;
+  wakeBound = true;
 
-  const trigger = el.querySelector<HTMLElement>('.nav-np__trigger');
-  trigger?.addEventListener('click', () => {
-    const pinned = el.classList.toggle('is-pinned');
-    trigger.setAttribute('aria-expanded', String(pinned));
-    pinned ? start() : stop();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') wake();
+    else stopPolling();
   });
 
-  document.addEventListener('click', (e) => {
-    if (!el.classList.contains('is-pinned')) return;
-    if (el.contains(e.target as Node)) return;
-    el.classList.remove('is-pinned');
-    trigger?.setAttribute('aria-expanded', 'false');
-    stop();
+  window.addEventListener('focus', wake);
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) wake();
   });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || !el.classList.contains('is-pinned')) return;
-    el.classList.remove('is-pinned');
-    trigger?.setAttribute('aria-expanded', 'false');
-    stop();
-  });
-
-  el.addEventListener('pointerenter', start);
-  el.addEventListener('pointerleave', stop);
-  el.addEventListener('focusin', start);
-  el.addEventListener('focusout', stop);
 }
 
 function initNowPlaying(): void {
@@ -283,15 +294,8 @@ function initNowPlaying(): void {
   else el.hidden = true;
 
   bindMenu(el);
+  bindWakeSources();
   refresh();
-  startPolling();
-
-  if (!visibilityBound) {
-    visibilityBound = true;
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') refresh();
-    });
-  }
 }
 
 onPageReady(initNowPlaying);

@@ -3,12 +3,15 @@
 @import "./rem.css";
 @import "./ram.css";
 @import "./window.css";
+@import "./chrome.css";
 @import "./aero.css";
 
+/* tailwind theme ext */
 @theme {
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
+/* gradient interp */
 @property --grad-1 {
   syntax: "<color>";
   inherits: true;
@@ -27,6 +30,7 @@
   initial-value: #101013;
 }
 
+/* page background */
 html {
   background-color: var(--surface-bg);
   background-image: radial-gradient(
@@ -38,6 +42,7 @@ html {
   background-repeat: no-repeat;
 }
 
+/* scroll lock */
 html.is-scroll-locked {
   overflow: hidden;
   padding-right: var(--sb-gutter, 0px);
@@ -48,6 +53,7 @@ html.is-scroll-locked {
   margin-right: calc(0px - var(--sb-gutter, 0px));
 }
 
+/* shared && theme transitions */
 :root {
   --radius: 4px;
   --radius-lg: 8px;
@@ -77,6 +83,7 @@ body {
   transition-timing-function: ease !important;
 }
 
+/* terminal prompt lines */
 .prompt-line {
   font-size: 0.75rem;
   color: var(--text-main);
@@ -89,6 +96,7 @@ body {
   white-space: pre;
 }
 
+/* text color helpers */
 .text-main {
   color: var(--text-main);
 }
@@ -101,6 +109,7 @@ body {
   color: var(--text-subtle);
 }
 
+/* section headings && measures */
 .section-heading {
   font-size: 1.125rem;
   font-weight: 700;
@@ -122,6 +131,7 @@ body {
   gap: 0.4rem;
 }
 
+/* dashed hint */
 .dashed-hint {
   position: relative;
   cursor: help;
@@ -169,6 +179,7 @@ button.dashed-hint {
   }
 }
 
+/* mdx prose */
 .prose-mdx {
   line-height: 1.65;
   color: var(--text-main);
@@ -290,6 +301,7 @@ button.dashed-hint {
   margin: 1rem 0;
 }
 
+/* view transitions && reduced motion */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.1s;
@@ -327,6 +339,7 @@ button.dashed-hint {
   }
 }
 
+/* solid fills */
 @media (prefers-reduced-transparency: reduce) {
   .ww::after,
   .ww-backdrop.is-open {
@@ -338,6 +351,7 @@ button.dashed-hint {
   }
 }
 
+/* sudo rm -rf / easter egg */
 html[data-deleted='1'] body > *:not(#rm-rf-overlay) {
   visibility: hidden;
 }

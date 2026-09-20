@@ -2,6 +2,7 @@ import { animate } from 'motion/mini';
 import { onPageReady, prefersReducedMotion, EASE } from '../animations';
 import { LOCATION } from '../config/location';
 import { BIRTHDAY } from '../utils/age';
+import { currentAge } from './age';
 import { getCachedWeather, loadWeather, type WeatherSnapshot } from './weather';
 import {
   DEFAULT_PHASE,
@@ -89,7 +90,14 @@ function isBirthday(): boolean {
 function readPools(el: HTMLElement): LinePools {
   try {
     const parsed = JSON.parse(el.dataset.moodLines ?? '{}') as LinePools;
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    if (!parsed || typeof parsed !== 'object') return {};
+    const age = String(currentAge());
+    return Object.fromEntries(
+      Object.entries(parsed).map(([key, lines]) => [
+        key,
+        (lines ?? []).map((line) => line.replace(/\{age\}/g, age)),
+      ]),
+    );
   } catch {
     return {};
   }

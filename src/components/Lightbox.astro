@@ -5,14 +5,14 @@ import type { ImageMetadata } from 'astro';
 interface Props {
   id: string;
   title: string;
+  path: string;
   caption: string;
   closeLabel: string;
-  closeText: string;
   image: ImageMetadata;
   imageAlt: string;
 }
 
-const { id, title, caption, closeLabel, closeText, image, imageAlt } = Astro.props;
+const { id, title, path, caption, closeLabel, image, imageAlt } = Astro.props;
 ---
 
 <dialog
@@ -21,11 +21,21 @@ const { id, title, caption, closeLabel, closeText, image, imageAlt } = Astro.pro
   aria-labelledby={`${id}-title`}
   aria-describedby={`${id}-caption`}
 >
-  <div class="lightbox-inner">
-    <div class="lightbox-controls">
-      <h2 id={`${id}-title`} class="lightbox-title">{title}</h2>
-      <button class="lightbox-close" type="button" aria-label={closeLabel} data-lightbox-close>{closeText}</button>
+  <div class="ww-titlebar">
+    <span class="ww-titlebar__prompt" aria-hidden="true">img@relmymathieu</span>
+    <span class="ww-titlebar__sep" aria-hidden="true">:</span>
+    <h2 id={`${id}-title`} class="ww-titlebar__path" aria-label={title}>{path}</h2>
+    <div class="ww-controls">
+      <button
+        class="ww-ctrl"
+        data-action="close"
+        type="button"
+        aria-label={closeLabel}
+        data-lightbox-close
+      >[x]</button>
     </div>
+  </div>
+  <div class="ww-body lightbox-body">
     <Image src={image} alt={imageAlt} class="lightbox-img" loading="lazy" decoding="async" />
     <p id={`${id}-caption`} class="lightbox-caption">{caption}</p>
   </div>
@@ -37,109 +47,130 @@ const { id, title, caption, closeLabel, closeText, image, imageAlt } = Astro.pro
 
 <style>
   .lightbox {
-    border: none;
-    background: transparent;
+    width: min(720px, calc(100vw - 4rem));
+    max-width: none;
+    max-height: 90vh;
     padding: 0;
     margin: auto;
+    color: var(--ww-fg);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--ww-radius, var(--console-radius, var(--radius-lg)));
+    box-shadow: var(--console-shadow, 4px 4px 0 var(--border));
+    overflow: hidden;
     opacity: 0;
-    transform: scale(0.95);
+    scale: 0.97;
     transition:
-      opacity 0.2s ease,
-      transform 0.2s ease,
+      opacity 0.2s var(--ww-ease-snappy, cubic-bezier(0.25, 1, 0.5, 1)),
+      scale 0.2s var(--ww-ease-snappy, cubic-bezier(0.25, 1, 0.5, 1)),
       display 0.2s allow-discrete,
       overlay 0.2s allow-discrete;
   }
 
   .lightbox[open] {
+    display: grid;
+    grid-template-rows: auto 1fr;
     opacity: 1;
-    transform: scale(1);
+    scale: 1;
   }
 
   @starting-style {
     .lightbox[open] {
       opacity: 0;
-      transform: scale(0.95);
+      scale: 0.97;
     }
+  }
+
+  .lightbox::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--ww-bg);
+    backdrop-filter: var(--console-backdrop-filter, blur(0px));
   }
 
   .lightbox::backdrop {
     background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
     transition:
       background 0.2s ease,
+      backdrop-filter 0.2s ease,
+      -webkit-backdrop-filter 0.2s ease,
       display 0.2s allow-discrete,
       overlay 0.2s allow-discrete;
   }
 
   .lightbox[open]::backdrop {
     background: var(--scrim-heavy);
+    backdrop-filter: blur(4px) saturate(130%);
   }
 
   @starting-style {
     .lightbox[open]::backdrop {
       background: rgba(0, 0, 0, 0);
+      backdrop-filter: blur(0px);
     }
   }
 
-  .lightbox-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
+  .lightbox .ww-titlebar {
     cursor: default;
-    padding: 0.5rem;
   }
 
-  .lightbox-controls {
-    width: min(640px, 90vw);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  .lightbox .ww-titlebar::before {
+    opacity: 0;
+  }
+
+  .lightbox .ww-titlebar__path {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  .lightbox-body {
     gap: 0.75rem;
-  }
-
-  .lightbox-title {
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--lightbox-caption);
-  }
-
-  .lightbox-close {
-    border: 1px solid currentColor;
-    border-radius: var(--radius);
-    background: transparent;
-    color: var(--lightbox-caption);
-    font: inherit;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    padding: 0.45rem 0.75rem;
-    min-height: 2.75rem;
-    cursor: pointer;
-  }
-
-  .lightbox-close:focus-visible {
-    outline: 2px dashed currentColor;
-    outline-offset: 3px;
+    padding: 0.75rem;
   }
 
   .lightbox-img {
-    max-width: min(640px, 90vw);
-    max-height: 75vh;
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: min(68vh, 620px);
     object-fit: contain;
+    padding: 0.5rem;
+    background: var(--well-bg);
     border: 1px solid var(--lightbox-img-border);
     border-radius: var(--radius);
   }
 
   .lightbox-caption {
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--border);
     color: var(--lightbox-caption);
-    font-family: inherit;
     font-size: 0.75rem;
+    line-height: 1.5;
+    text-wrap: pretty;
   }
 
-  @media (max-width: 640px) {
-    .lightbox-controls {
-      flex-direction: column;
-      align-items: flex-start;
+  @media (max-width: 560px) {
+    .lightbox {
+      width: calc(100vw - 1.5rem);
+    }
+
+    .lightbox-body {
+      padding: 0.5rem;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .lightbox::after {
+      backdrop-filter: none;
+      background: var(--ww-bg-solid, var(--ww-bg));
+    }
+
+    .lightbox[open]::backdrop {
+      backdrop-filter: none;
     }
   }
 </style>

@@ -1,4 +1,5 @@
 
+/* backdrop behind an open window */
 .ww-backdrop {
   position: fixed;
   inset: 0;
@@ -18,11 +19,12 @@
   transition: background 0.22s ease, backdrop-filter 0.22s ease, -webkit-backdrop-filter 0.22s ease, visibility 0s linear 0s;
 }
 
+/* window frame */
 .ww {
   --ww-ease-snappy: cubic-bezier(0.25, 1, 0.5, 1);
   --ww-ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
   --ww-ease-bouncy: cubic-bezier(0.05, 0.9, 0.1, 1.05);
-    --ww-frame: 0px;
+  --ww-frame: 0px;
   position: fixed;
   z-index: 100;
   top: 50%;
@@ -85,6 +87,7 @@
   will-change: left, top;
 }
 
+/* window states */
 .ww.is-fullscreen {
   --ww-frame: 0px;
   top: 0 !important;
@@ -116,6 +119,7 @@
 }
 .ww.is-minimized .ww-titlebar { cursor: pointer; }
 
+/* default open animation */
 @keyframes ww-open-desktop {
   from {
     opacity: 0;
@@ -133,6 +137,7 @@
   }
 }
 
+/* titlebar */
 .ww-titlebar {
   position: relative;
   isolation: isolate;
@@ -181,6 +186,7 @@
   min-width: 0;
 }
 
+/* window controls */
 .ww-controls {
   display: flex;
   align-items: stretch;
@@ -273,6 +279,7 @@
   outline-offset: 2px;
 }
 
+/* window body */
 .ww-body {
   display: flex;
   flex-direction: column;
@@ -322,6 +329,7 @@
   }
 }
 
+/* header image */
 .ww-img-placeholder {
   border-bottom: 1px solid var(--border);
   height: 10rem;
@@ -354,6 +362,7 @@
   object-fit: contain;
 }
 
+/* content body */
 .ww-content {
   padding: 1rem 0.875rem;
   display: flex;
@@ -402,6 +411,7 @@
   opacity: 0.5;
 }
 
+/* responsive */
 @media (pointer: coarse) {
   .ww-ctrl {
     min-height: 2.75rem;

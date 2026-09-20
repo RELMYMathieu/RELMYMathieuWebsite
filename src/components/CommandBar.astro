@@ -240,8 +240,8 @@ const blogSlugs = (await getCollection('blog', (e) => e.id.endsWith(`/${lang}`))
     color: var(--console-placeholder, #71717a);
   }
 
-  @media (max-width: 560px) {
-    .cmdbar-trigger { display: none; }
+  @media (max-width: 600px) {
+    .cmdbar-trigger__key { display: none; }
   }
 
   @media (prefers-reduced-transparency: reduce) {

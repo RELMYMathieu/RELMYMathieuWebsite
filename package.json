@@ -1,7 +1,7 @@
 {
   "name": "relmymathieuwebsite",
   "private": true,
-  "description": "Relmy Mathieu's personal site, aspiring nuclear engineer, dev, nerd.",
+  "description": "Relmy Mathieu's personal site, CS student, dev, nerd.",
   "type": "module",
   "version": "0.0.1",
   "engines": {
